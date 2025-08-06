@@ -1,0 +1,31 @@
+apiVersion: v2
+name: oriyan-portfolio
+description: Oriyan Rask DevOps Portfolio - A complete DevOps showcase application
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - devops
+  - portfolio
+  - flask
+  - mongodb
+  - kubernetes
+home: https://github.com/MasteRefleX123/devops-portfolio-project
+sources:
+  - https://github.com/MasteRefleX123/devops-portfolio-project
+maintainers:
+  - name: Oriyan Rask
+    email: oriyanrwork99@gmail.com
+    url: https://github.com/MasteRefleX123
+annotations:
+  category: Portfolio
+  licenses: MIT
+dependencies:
+  - name: mongodb
+    version: "13.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: mongodb.enabled
+  - name: redis
+    version: "17.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
