@@ -1,69 +1,5 @@
-from flask import Flask, jsonify, request
-from pymongo import MongoClient
-from datetime import datetime
-import os
-
-app = Flask(__name__)
-
-# MongoDB Configuration
-MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/oriyan_portfolio')
-try:
-    mongo_client = MongoClient(MONGO_URI)
-    db = mongo_client.get_default_database()
-    visitors_collection = db.visitors
-    stats_collection = db.stats
-    print("✅ MongoDB connected successfully")
-    
-    # Initialize stats if not exists
-    if stats_collection.count_documents({}) == 0:
-        stats_collection.insert_one({
-            'total_visitors': 0,
-            'last_updated': datetime.utcnow()
-        })
-        
-except Exception as e:
-    print(f"⚠️  MongoDB connection failed: {e}")
-    mongo_client = None
-    db = None
-    visitors_collection = None
-    stats_collection = None
-
-def track_visitor():
-    """Track visitor to database"""
-    try:
-        if visitors_collection is not None:
-            visitor_data = {
-                'ip': request.environ.get('REMOTE_ADDR', 'unknown'),
-                'user_agent': request.environ.get('HTTP_USER_AGENT', 'unknown'),
-                'timestamp': datetime.utcnow(),
-                'page': request.path
-            }
-            visitors_collection.insert_one(visitor_data)
-            
-            # Update stats
-            stats_collection.update_one(
-                {},
-                {'$inc': {'total_visitors': 1}, '$set': {'last_updated': datetime.utcnow()}},
-                upsert=True
-            )
-            return True
-    except Exception as e:
-        print(f"Error tracking visitor: {e}")
-    return False
-
-def get_visitor_count():
-    """Get total visitor count from database"""
-    try:
-        if stats_collection is not None:
-            stats = stats_collection.find_one({})
-            return stats.get('total_visitors', 42) if stats else 42
-    except:
-        pass
-    return 42  # Fallback
-
 @app.route('/')
 def home():
-    track_visitor()  # Track visitor to MongoDB
     return '''
     <!DOCTYPE html>
     <html lang="he" dir="rtl">
@@ -491,7 +427,7 @@ def stats():
         'github': 'https://github.com/MasteRefleX123',
         'location': 'מודיעין, ישראל',
         'age': 21,
-        'visitors': get_visitor_count(),
+        'visitors': 42,
         'projects': 3,
         'certifications': 1,
         'experience': 'DevOps Junior Engineer',
@@ -529,30 +465,3 @@ if __name__ == '__main__':
     print('🌐 Access at: http://localhost:5000')
     print('📂 GitHub: https://github.com/MasteRefleX123')
     app.run(host='0.0.0.0', port=5000, debug=True)
-
-@app.route('/api/visitors', methods=['GET', 'POST'])
-def visitors_api():
-    """Handle visitor tracking and retrieval"""
-    if request.method == 'POST':
-        # Manual visitor tracking
-        track_visitor()
-        return jsonify({'status': 'visitor tracked', 'total': get_visitor_count()})
-    else:
-        # Get visitor stats
-        try:
-            if visitors_collection is not None:
-                total = get_visitor_count()
-                recent = list(visitors_collection.find().sort('timestamp', -1).limit(10))
-                # Convert ObjectId to string for JSON serialization
-                for visit in recent:
-                    visit['_id'] = str(visit['_id'])
-                    visit['timestamp'] = visit['timestamp'].isoformat()
-                
-                return jsonify({
-                    'total_visitors': total,
-                    'recent_visitors': recent
-                })
-        except Exception as e:
-            print(f"Error getting visitor data: {e}")
-        
-        return jsonify({'total_visitors': get_visitor_count(), 'recent_visitors': []})
