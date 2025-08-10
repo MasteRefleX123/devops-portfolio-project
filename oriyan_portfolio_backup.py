@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from pymongo import MongoClient
-from datetime import datetime, timezone
+from datetime import datetime
 import os
 
 app = Flask(__name__)
@@ -18,7 +18,7 @@ try:
     if stats_collection.count_documents({}) == 0:
         stats_collection.insert_one({
             'total_visitors': 0,
-            'last_updated': datetime.now(timezone.utc)
+            'last_updated': datetime.utcnow()
         })
         
 except Exception as e:
@@ -35,7 +35,7 @@ def track_visitor():
             visitor_data = {
                 'ip': request.environ.get('REMOTE_ADDR', 'unknown'),
                 'user_agent': request.environ.get('HTTP_USER_AGENT', 'unknown'),
-                'timestamp': datetime.now(timezone.utc),
+                'timestamp': datetime.utcnow(),
                 'page': request.path
             }
             visitors_collection.insert_one(visitor_data)
@@ -43,7 +43,7 @@ def track_visitor():
             # Update stats
             stats_collection.update_one(
                 {},
-                {'$inc': {'total_visitors': 1}, '$set': {'last_updated': datetime.now(timezone.utc)}},
+                {'$inc': {'total_visitors': 1}, '$set': {'last_updated': datetime.utcnow()}},
                 upsert=True
             )
             return True
