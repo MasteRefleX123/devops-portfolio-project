@@ -8,7 +8,7 @@ app = Flask(__name__)
 # MongoDB Configuration
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/oriyan_portfolio')
 try:
-    mongo_client = MongoClient(MONGO_URI)
+    mongo_client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=2000)
     db = mongo_client.get_default_database()
     visitors_collection = db.visitors
     stats_collection = db.stats

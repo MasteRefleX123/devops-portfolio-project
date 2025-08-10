@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production
+      # target: production
     container_name: oriyan-portfolio-app
     ports:
       - "5000:5000"
@@ -14,11 +14,11 @@ services:
       - FLASK_ENV=production
       - FLASK_DEBUG=False
       - MONGO_URI=mongodb://mongo:27017/oriyan_portfolio
-      - REDIS_URL=redis://redis:6379/0
+      # - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=oriyan-devops-portfolio-secret-2024
     depends_on:
       - mongo
-      - redis
+      # - redis
     volumes:
       - ./logs:/app/logs
     networks:
@@ -60,24 +60,24 @@ services:
       start_period: 40s
 
   # Redis for Caching & Session Management
-  redis:
-    image: redis:7.2-alpine
-    container_name: oriyan-portfolio-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
-    networks:
-      - portfolio-network
-    restart: unless-stopped
-    command: redis-server /usr/local/etc/redis/redis.conf
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
+# #   redis:
+# #     image: redis:7.2-alpine
+# #     container_name: oriyan-portfolio-redis
+# #     ports:
+# #       - "6379:6379"
+# #     volumes:
+# #       # - redis_data:/data
+# #       - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+# #     networks:
+# #       - portfolio-network
+# #     restart: unless-stopped
+#     command: redis-server /usr/local/etc/redis/redis.conf
+#     healthcheck:
+#       test: ["CMD", "redis-cli", "ping"]
+#       interval: 30s
+#       timeout: 10s
+#       retries: 3
+# 
   # Nginx Reverse Proxy & Load Balancer
   nginx:
     image: nginx:1.25-alpine
@@ -194,15 +194,15 @@ services:
 
 volumes:
   mongo_data:
-    driver: local
-  redis_data:
-    driver: local
+  #   driver: local
+  # redis_data:
+  #   driver: local
   prometheus_data:
-    driver: local
+  #   driver: local
   grafana_data:
-    driver: local
+  #   driver: local
   elasticsearch_data:
-    driver: local
+  #   driver: local
 
 networks:
   portfolio-network:
