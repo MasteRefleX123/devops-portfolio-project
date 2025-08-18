@@ -3,20 +3,26 @@ kind: Ingress
 metadata:
   name: portfolio-ingress
   namespace: oriyan-portfolio
-  labels:
-    app: portfolio
   annotations:
-    kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
 spec:
-  tls:
-  - hosts:
-    - portfolio.oriyanrask.dev
-    secretName: portfolio-tls
+  ingressClassName: nginx
   rules:
-  - host: portfolio.oriyanrask.dev
+  - host: portfolio.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: portfolio-service
+            port:
+              number: 80
+  - host: oriyan.local
     http:
       paths:
       - path: /

@@ -1,0 +1,55 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: portfolio-network-policy
+  namespace: oriyan-portfolio
+spec:
+  podSelector:
+    matchLabels:
+      app: portfolio
+      component: backend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector: {}  # Allow from all pods in namespace
+    ports:
+    - protocol: TCP
+      port: 5000
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: mongodb
+          component: database
+    ports:
+    - protocol: TCP
+      port: 27017
+  - ports:
+    - protocol: TCP
+      port: 53  # DNS
+    - protocol: UDP
+      port: 53  # DNS
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mongodb-network-policy
+  namespace: oriyan-portfolio
+spec:
+  podSelector:
+    matchLabels:
+      app: mongodb
+      component: database
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: portfolio
+          component: backend
+    ports:
+    - protocol: TCP
+      port: 27017
