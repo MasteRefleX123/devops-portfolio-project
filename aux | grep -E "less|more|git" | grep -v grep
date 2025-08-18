@@ -1,0 +1,3 @@
+.coverage
+k8s/deployment.yaml
+tests/test_contact_form.py
