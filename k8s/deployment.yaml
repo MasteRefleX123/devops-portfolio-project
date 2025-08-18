@@ -6,9 +6,9 @@ metadata:
   labels:
     app: portfolio
     component: backend
-    owner: oriyan-rask
+    owner: oriyan-hemo
 spec:
-  replicas: 3
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -23,11 +23,11 @@ spec:
       labels:
         app: portfolio
         component: backend
-        version: v1.0.0
+        version: v2.0.0
     spec:
       containers:
       - name: portfolio-app
-        image: oriyanrask/devops-portfolio:latest
+        image: mastereflex123/portfolio:v2.0
         ports:
         - containerPort: 5000
           name: http
@@ -37,24 +37,16 @@ spec:
         - name: FLASK_DEBUG
           value: "False"
         - name: MONGO_URI
-          valueFrom:
-            secretKeyRef:
-              name: portfolio-secrets
-              key: mongo-uri
+          value: "mongodb://localhost:27017/portfolio_db"
         - name: SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: portfolio-secrets
-              key: secret-key
-        - name: REDIS_URL
-          value: "redis://portfolio-redis:6379/0"
+          value: "dev-secret-key-2024"
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "250m"
+            memory: "128Mi"
+            cpu: "100m"
           limits:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: "256Mi"
+            cpu: "200m"
         livenessProbe:
           httpGet:
             path: /health
@@ -71,14 +63,6 @@ spec:
           periodSeconds: 5
           timeoutSeconds: 3
           failureThreshold: 3
-        volumeMounts:
-        - name: app-logs
-          mountPath: /app/logs
-      volumes:
-      - name: app-logs
-        emptyDir: {}
-      imagePullSecrets:
-      - name: docker-registry-secret
 ---
 apiVersion: v1
 kind: Service
@@ -89,12 +73,13 @@ metadata:
     app: portfolio
     component: backend
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
   - port: 80
     targetPort: 5000
     protocol: TCP
     name: http
+    nodePort: 30001
   selector:
     app: portfolio
     component: backend
