@@ -1,0 +1,23 @@
+jenkins:
+  systemMessage: "DevOps Portfolio Project - Automated Jenkins"
+  
+jobs:
+  - script: >
+      pipelineJob('devops-portfolio') {
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/MasteRefleX123/devops-portfolio-project.git')
+                }
+                branches('*/feature/day2-docker-kubernetes')
+              }
+            }
+            scriptPath('Jenkinsfile')
+          }
+        }
+        triggers {
+          githubPush()
+        }
+      }
