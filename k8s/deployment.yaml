@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: portfolio-app
-        image: mastereflex123/portfolio:v2.0
+        image: mastereflex123/portfolio:latest
         ports:
         - containerPort: 5000
           name: http
@@ -36,10 +36,23 @@ spec:
           value: "production"
         - name: FLASK_DEBUG
           value: "False"
+        - name: MONGO_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: portfolio-secrets
+              key: MONGO_USERNAME
+        - name: MONGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: portfolio-secrets
+              key: MONGO_PASSWORD
         - name: MONGO_URI
-          value: "mongodb://localhost:27017/portfolio_db"
+          value: "mongodb://$(MONGO_USERNAME):$(MONGO_PASSWORD)@mongodb-service:27017/oriyan_portfolio?authSource=admin"
         - name: SECRET_KEY
-          value: "dev-secret-key-2024"
+          valueFrom:
+            secretKeyRef:
+              name: portfolio-secrets
+              key: SECRET_KEY
         resources:
           requests:
             memory: "128Mi"

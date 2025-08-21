@@ -3,7 +3,13 @@ from pymongo import MongoClient
 from datetime import datetime, timezone
 import os
 
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+
 app = Flask(__name__)
+
+# Metrics
+REQUEST_COUNT = Counter('portfolio_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'http_status'])
+REQUEST_LATENCY = Histogram('portfolio_request_latency_seconds', 'Request latency', ['endpoint'])
 
 # MongoDB Configuration
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/oriyan_portfolio')
@@ -60,6 +66,24 @@ def get_visitor_count():
     except:
         pass
     return 42  # Fallback
+
+@app.before_request
+def before_request():
+    request._start_time = datetime.now(timezone.utc)
+
+@app.after_request
+def after_request(response):
+    try:
+        latency = (datetime.now(timezone.utc) - getattr(request, '_start_time', datetime.now(timezone.utc))).total_seconds()
+        REQUEST_LATENCY.labels(request.path).observe(latency)
+        REQUEST_COUNT.labels(request.method, request.path, response.status_code).inc()
+    except Exception:
+        pass
+    return response
+
+@app.route('/metrics')
+def metrics():
+    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
 
 @app.route('/')
 def home():
@@ -404,7 +428,7 @@ def home():
                     <div class="cert-card" style="background: linear-gradient(45deg, #95a5a6, #7f8c8d);">
                         <i class="fab fa-aws"></i>
                         <h4>AWS Certification</h4>
-                        <p class="skill-placeholder">להוסיف אם יש/מתוכנן</p>
+                        <p class="skill-placeholder">להוסייף אם יש/מתוכנן</p>
                         <p class="skill-placeholder">תאריך</p>
                     </div>
                     
@@ -816,7 +840,9 @@ if __name__ == '__main__':
     print('📧 Contact: oriyanrwork99@gmail.com')
     print('🌐 Access at: http://localhost:5000')
     print('📂 GitHub: https://github.com/MasteRefleX123')
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Disable debug by default for production safety; enable via FLASK_DEBUG=true if needed
+    debug_flag = os.getenv('FLASK_DEBUG', 'False').lower() in ('1', 'true', 'yes')
+    app.run(host='0.0.0.0', port=5000, debug=debug_flag)
 
 @app.route('/api/visitors', methods=['GET', 'POST'])
 def visitors_api():

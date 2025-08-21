@@ -23,5 +23,6 @@ ENV PATH=/root/.local/bin:$PATH
 
 EXPOSE 5000
 
-# Use the correct main file
-CMD ["python", "oriyan_portfolio.py"]
+# Use gunicorn in production
+ENV FLASK_ENV=production
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "oriyan_portfolio:app"]
