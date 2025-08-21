@@ -1,0 +1,52 @@
+{
+  "title": "Portfolio App Overview",
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "HTTP Requests Rate (1m)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(portfolio_requests_total[1m]))",
+          "legendFormat": "req/s"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+    },
+    {
+      "type": "graph",
+      "title": "HTTP Requests by Status (1m)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum by (http_status) (rate(portfolio_requests_total[1m]))",
+          "legendFormat": "{{http_status}}"
+        }
+      ],
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+    },
+    {
+      "type": "graph",
+      "title": "Request Latency p50/p90/p99 (est.)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum(rate(portfolio_request_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.9, sum(rate(portfolio_request_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p90"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(portfolio_request_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p99"
+        }
+      ],
+      "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8}
+    }
+  ],
+  "schemaVersion": 36,
+  "version": 1
+}

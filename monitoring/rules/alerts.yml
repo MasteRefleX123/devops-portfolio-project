@@ -1,0 +1,11 @@
+groups:
+  - name: portfolio-alerts
+    rules:
+      - alert: PortfolioAppNoMetrics
+        expr: absent(portfolio_requests_total)
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No metrics from portfolio app"
+          description: "No portfolio_requests_total series scraped for 5m. Check app/ingress."
