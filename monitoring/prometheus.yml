@@ -3,7 +3,14 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'portfolio-app'
+  # Local compose (via port-forward to K8s service)
+  - job_name: 'portfolio-app-local'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['localhost:5001']
+
+  # In-cluster service target (effective only when Prometheus runs inside the cluster)
+  - job_name: 'portfolio-app-k8s'
     metrics_path: /metrics
     static_configs:
       - targets: ['portfolio-service.oriyan-portfolio.svc.cluster.local:80']
