@@ -26,6 +26,7 @@ PLUGINS=(
     "ansicolor"
     "matrix-auth"
     "role-strategy"
+    "configuration-as-code"
 )
 
 echo "Installing Jenkins plugins..."

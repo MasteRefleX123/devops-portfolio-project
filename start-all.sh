@@ -8,6 +8,26 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# Load .env for credentials if exists
+if [ -f .env ]; then
+    set -a
+    . ./.env
+    set +a
+fi
+
+# Prepare KUBECONFIG_BASE64 for JCasC
+if [ -z "${KUBECONFIG_BASE64}" ]; then
+    if [ -f "$HOME/.kube/config" ]; then
+        export KUBECONFIG_BASE64=$(base64 -w0 "$HOME/.kube/config" 2>/dev/null || base64 "$HOME/.kube/config" | tr -d '\n')
+    else
+        mkdir -p "$HOME/.kube"
+        kind get kubeconfig --name devops-portfolio > "$HOME/.kube/config" 2>/dev/null || true
+        if [ -f "$HOME/.kube/config" ]; then
+            export KUBECONFIG_BASE64=$(base64 -w0 "$HOME/.kube/config" 2>/dev/null || base64 "$HOME/.kube/config" | tr -d '\n')
+        fi
+    fi
+fi
+
 echo -e "${GREEN}[1/5]${NC} Starting Jenkins..."
 cd jenkins && docker compose up -d
 sleep 10

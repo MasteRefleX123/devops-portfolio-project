@@ -43,7 +43,7 @@ pipeline {
         }
         
         stage('Push to Registry') {
-            when { branch 'main' }
+            when { anyOf { branch 'main'; branch 'feature/day2-docker-kubernetes' } }
             steps {
                 echo 'Pushing to Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
@@ -55,7 +55,7 @@ pipeline {
         }
         
         stage('Deploy to Kubernetes') {
-            when { branch 'main' }
+            when { anyOf { branch 'main'; branch 'feature/day2-docker-kubernetes' } }
             steps {
                 echo 'Deploying to Kubernetes...'
                 withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
