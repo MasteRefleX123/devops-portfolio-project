@@ -1,0 +1,29 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: portfolio-alerts
+  namespace: monitoring
+  labels:
+    release: kps
+spec:
+  groups:
+  - name: portfolio.rules
+    rules:
+    - alert: PortfolioServiceDown
+      expr: up{namespace="oriyan-portfolio", service="portfolio-service"} == 0
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: Portfolio service is down
+        description: Prometheus target for portfolio-service is not up
+    - alert: HighHttp5xxRate
+      expr: sum(rate(flask_http_request_total{status=~"5.."}[5m])) by (instance) > 0.1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High 5xx error rate
+        description: HTTP 5xx responses exceed 0.1 rps in the last 5 minutes
+
+
