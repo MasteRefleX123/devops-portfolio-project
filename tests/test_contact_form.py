@@ -8,7 +8,7 @@ def test_contact_form_page(client):
     """Test that contact form page loads successfully"""
     response = client.get('/contact')
     assert response.status_code == 200
-    assert b'צור קשר' in response.data
+    assert 'צור קשר' in response.get_data(as_text=True)
 
 def test_submit_contact_success(client):
     """Test successful contact form submission"""

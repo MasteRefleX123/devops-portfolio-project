@@ -27,14 +27,23 @@ pipeline {
             }
         }
         
-        stage('Setup Python') {
+        stage('Setup Tools') {
             steps {
                 sh '''
                     set -e
                     apt-get update
-                    DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip
+                    DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip curl ca-certificates gnupg docker.io
+
+                    # Install kubectl (latest stable)
+                    KVERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+                    curl -LO "https://dl.k8s.io/release/${KVERSION}/bin/linux/amd64/kubectl"
+                    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+                    rm -f kubectl
+
                     python3 --version
                     pip3 --version || true
+                    docker --version || true
+                    kubectl version --client --output=yaml || true
                 '''
             }
         }
