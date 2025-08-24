@@ -27,6 +27,18 @@ pipeline {
             }
         }
         
+        stage('Setup Python') {
+            steps {
+                sh '''
+                    set -e
+                    apt-get update
+                    DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip
+                    python3 --version
+                    pip3 --version || true
+                '''
+            }
+        }
+        
         stage('Test') {
             steps {
                 echo 'Running tests...'
