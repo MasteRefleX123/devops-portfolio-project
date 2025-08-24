@@ -28,6 +28,7 @@ spec:
       containers:
       - name: portfolio-app
         image: mastereflex123/portfolio:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
           name: http
@@ -76,6 +77,9 @@ spec:
           periodSeconds: 5
           timeoutSeconds: 3
           failureThreshold: 3
+        env:
+        - name: ROLLOUT_TRIGGER
+          value: "$(date +%s)"
 ---
 apiVersion: v1
 kind: Service
