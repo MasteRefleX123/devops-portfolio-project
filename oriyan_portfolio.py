@@ -554,6 +554,7 @@ def projects():
 # ============================================
 
 # Initialize contacts collection
+contacts_collection = None
 try:
     if db is not None:
         contacts_collection = db.contacts
