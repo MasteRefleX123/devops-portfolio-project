@@ -44,7 +44,7 @@ pipeline {
                 echo 'Running tests...'
                 sh '''
                     python3 -m venv venv
-                    source venv/bin/activate
+                    . venv/bin/activate
                     pip install -r requirements.txt
                     pip install pytest pytest-cov
                     pytest tests/ -v --cov=oriyan_portfolio
