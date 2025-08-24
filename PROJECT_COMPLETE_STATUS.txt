@@ -37,6 +37,51 @@ CURRENT STATE (NOW)
 - Webhook: updated to current ngrok URL (above)
  - In-cluster monitoring: kps pods Running; ServiceMonitor discovered targets; validation in progress
 
+KNOWN ISSUES / TROUBLESHOOTING (NOW)
+- Jenkins Setup/Plugins:
+  - Setup wizard likely not fully completed; API calls hit CSRF (crumb) when trying to trigger builds.
+  - If "Manage Jenkins" is hidden for your user: log in as admin and finish plugin installation.
+  - Actions:
+    - Install suggested plugins, or install manually: git, github, github-branch-source, workflow-aggregator, pipeline-utility-steps, credentials, credentials-binding, ssh-credentials, ssh-agent, docker-workflow, docker-commons, kubernetes, kubernetes-cli, configuration-as-code, cloudbees-folder, token-macro, junit, htmlpublisher, ws-cleanup, timestamper, ansicolor, build-timeout.
+    - After install, restart Jenkins, ensure admin sees "Manage Jenkins".
+    - To trigger builds without UI: either use crumb+cookie, or configure Job Token and call buildWithParameters.
+- Jenkins Pipeline failure (#1):
+  - Errors observed: MissingContextVariableException in post stage (using sh without node), and missing BRANCH_NAME env.
+  - Actions:
+    - Wrap post cleanup in a node context or use cleanWs() in post { always { ... } }.
+    - Guard branch usage: env.BRANCH_NAME ?: 'feature/day2-docker-kubernetes' (or use env.GIT_BRANCH).
+    - Ensure credentials exist: github-token (Secret Text), docker-hub (Username/Password), kubeconfig (Secret file or text).
+- Monitoring targets:
+  - ServiceMonitor for portfolio is applied; initial scrape may show 0/Up for a few minutes. Verify with Prometheus query:
+    - up{service="portfolio-service", namespace="oriyan-portfolio"}
+  - If target is not Up:
+    - Confirm Service labels (app: portfolio, component: backend) match ServiceMonitor selector.
+    - Confirm Service port name is "http", path /metrics, and app exposes metrics.
+- Grafana access:
+  - If port 3000 busy, use 3001 for port-forward.
+  - Login: admin / prom-operator.
+
+QUICK COMMANDS (OPERATIONS)
+- Jenkins last build console (first lines):
+  - curl -s -u admin:******** http://localhost:8080/job/devops-portfolio/lastBuild/consoleText | sed -n '1,160p'
+- Trigger Jenkins build via UI: Job devops-portfolio → Build Now (recommended until plugins complete).
+- Grafana port-forward (when 3000 is in use):
+  - kubectl -n monitoring port-forward svc/kps-grafana 3001:80
+  - Open: http://localhost:3001 (admin / prom-operator)
+- Prometheus query from inside cluster (Up metric for app):
+  - kubectl -n monitoring run prom-curl --restart=Never --rm -i --image=curlimages/curl:8.10.1 -- \
+    curl -s "http://kps-kube-prometheus-stack-prometheus:9090/api/v1/query?query=up%7Bservice%3D%22portfolio-service%22%2Cnamespace%3D%22oriyan-portfolio%22%7D"
+- Jenkins crumb (if using API):
+  - CRUMB=$(curl -s -u admin:******** http://localhost:8080/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb))
+  - curl -s -u admin:******** -H "$CRUMB" -X POST http://localhost:8080/job/devops-portfolio/build?delay=0sec
+
+NEXT ACTIONS (PRIORITIZED)
+1) Finish Jenkins plugin installation and ensure admin access to Manage Jenkins.
+2) Create/verify credentials: github-token, docker-hub, kubeconfig.
+3) Re-run pipeline (Build Now). If fails, update Jenkinsfile: wrap post cleanup in node/cleanWs and guard BRANCH_NAME.
+4) Verify Prometheus target Up and Grafana dashboard data for the app.
+5) Merge feature/day2-docker-kubernetes → main; push; update secondary remote if needed.
+
 PENDING/NEXT STEPS
 1) Jenkins Credentials via JCasC (preferred) or manual:
    - github-token (Secret Text)
