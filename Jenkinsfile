@@ -4,8 +4,8 @@ pipeline {
     environment {
         DOCKER_REGISTRY = 'docker.io'
         DOCKER_IMAGE = 'mastereflex123/portfolio'
-        DOCKER_CREDENTIALS = 'docker-hub'
-        GITHUB_CREDENTIALS = 'github-token'
+        DOCKER_CREDENTIALS = 'docker-hub-credentials'
+        GITHUB_CREDENTIALS = 'github-credentials'
         KUBECONFIG_CREDENTIALS = 'kubeconfig'
     }
 

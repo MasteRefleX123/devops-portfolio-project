@@ -3,13 +3,14 @@ from pymongo import MongoClient
 from datetime import datetime, timezone
 import os
 
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST, CollectorRegistry
 
 app = Flask(__name__)
 
 # Metrics
-REQUEST_COUNT = Counter('portfolio_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'http_status'])
-REQUEST_LATENCY = Histogram('portfolio_request_latency_seconds', 'Request latency', ['endpoint'])
+metrics_registry = CollectorRegistry()
+REQUEST_COUNT = Counter('portfolio_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'http_status'], registry=metrics_registry)
+REQUEST_LATENCY = Histogram('portfolio_request_latency_seconds', 'Request latency', ['endpoint'], registry=metrics_registry)
 
 # MongoDB Configuration
 MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/oriyan_portfolio')
@@ -83,7 +84,7 @@ def after_request(response):
 
 @app.route('/metrics')
 def metrics():
-    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
+    return generate_latest(metrics_registry), 200, {'Content-Type': CONTENT_TYPE_LATEST}
 
 @app.route('/')
 def home():
