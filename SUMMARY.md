@@ -2,47 +2,48 @@
 
 ## מצב נוכחי
 - אפליקציה: Flask עם `/metrics`, רצה ב-Kubernetes (namespace: `oriyan-portfolio`), Service `portfolio-service` מאזין ל-HTTP.
-- CI/CD: Jenkins Job `devops-portfolio` על הסניף `feature/day2-docker-kubernetes`, טריגר GitHub Webhook פעיל.
-- סודות: מנוהלים ב-JCasC (`jenkins/jenkins-casc.yaml`) – `github-token`, `docker-hub`, `kubeconfig` (מבוסס `KUBECONFIG_BASE64`).
-- ניטור: Prometheus + Grafana מוגדרים; יש `ServiceMonitor` ו-`PrometheusRule` לאפליקציה.
-
-## נקודות עיקריות
-- Endpoints מקומיים:
-  - Jenkins: http://localhost:8080
-  - אפליקציה: http://localhost:5001
-  - Health: http://localhost:5001/health
-  - Metrics: http://localhost:5001/metrics
-- Ngrok: נפתח ע"י `./start-all.sh`; עדכון ה-Webhook מתבצע ע"י `update-github-webhook-safe.sh`.
+- CI/CD (Jenkins): Job `devops-portfolio` על `feature/day2-docker-kubernetes`, טריגר GitHub Webhook פעיל (ngrok OK).
+- סודות/קרדנשלז ב-Jenkins (מאושרים):
+  - `docker-hub-credentials` (Username/Password)
+  - `github-credentials` (Username/Password לטוקן GitHub, בשימוש ל-SCM/טריגר)
+  - `kubeconfig` (Secret file בשם `config`)
+- שיפורים שבוצעו היום:
+  - תוקנו בדיקות Pytest (fixture `client`, תמיכת UTF‑8, מטריקות Prometheus עם Registry ייעודי).
+  - `Jenkinsfile`: שלב Setup Tools (Python, Docker CLI, kubectl), יישור IDs של קרדנשלז, הפעלת venv תואמת sh.
+  - /api/contact מחזיר כעת `success=true` בהתאם לבדיקות.
 
 ## סטטוס Pipeline
-- שלבים: Build → Test (pytest+cov) → Docker Build/Tag → Push (main/feature) → Deploy (kubectl set image + rollout).
-- Credentials נדרשים: `docker-hub`, `github-token`, `kubeconfig`.
-- הערות יציבות:
-  - `post { always { cleanWs() } }` קיים.
-  - Push/Deploy רק על `main` או `feature/day2-docker-kubernetes`.
+- שלבים: Test → Build Docker Image → Push (Docker Hub) → Deploy (kubectl set image + rollout)
+- תנאי ריצה ל-Push/Deploy: סניף `main` או `feature/day2-docker-kubernetes` (אנחנו על feature, כך שמורשה).
+
+## בעיות/סיכונים שנותרו
+- Docker Push: תלוי בהרשאות ותפוסת דיסק. אם push ייכשל → לאמת `docker-hub-credentials` ולבדוק קצב/ratelimit.
+- Deploy: דורש kubeconfig תקין והרשאות לקלאסטר. אם `kubectl` ייכשל → לבדוק את ה־Secret file `kubeconfig` ולוודא שהקלאסטר נגיש.
+- Monitoring: לאחר Deploy לאמת מטריקות ב‑Prometheus וגרפים ב‑Grafana (kube‑prometheus‑stack).
+
+## מה נשאר כדי לסגור את היום (Day 5)
+1) להריץ Build ירוק עד הסוף (כולל Push/Deploy).
+2) לאשר rollout תקין ולבדוק `/health` ו‑`/metrics` (200).
+3) לאמת ב‑Prometheus שה‑Service נבחר ע"י ServiceMonitor; וב‑Grafana שהדאשבורד מציג נתונים.
+
+## צעדים הבאים (לקראת Argo CD)
+- להכין/לתקף Helm chart (תיקיית `helm/`).
+- התקנת Argo CD (`namespace: argocd`) והגדרת Application (או App‑of‑Apps) שמצביע על הריפו.
+- לחבר את הפייפליין: bump גרסת image ב‑values → commit → Argo מסנכרן אוטומטית לקלאסטר.
 
 ## פעולות מהירות
-```bash
-# הפעלה כוללת
+```
+# הפעלה כוללת (לוקאלית)
 ./start-all.sh
 
-# עדכון Webhook לאחר פתיחת Ngrok
+# עדכון Webhook לאחר פתיחת ngrok
 ./update-github-webhook-safe.sh
 
 # בדיקות מקומיות
 pytest tests/ --cov=oriyan_portfolio --cov-report=term-missing
-
-# Grafana (אם 3000 תפוס)
-kubectl -n monitoring port-forward svc/kps-grafana 3001:80
 ```
 
-## בעיות ידועות/מעקב
-- Jenkins Plugins/Setup: להשלים התקנה; ללא זה ייתכן CSRF ב-API.
-- Pipeline: לוודא קיום Credentials ולפתור כשלים נקודתיים אם יצוצו.
-- Monitoring: לוודא שה-`ServiceMonitor` מזהה Targets וה-`up` של האפליקציה = 1.
-
-## צעדים הבאים
-1) להשלים התקנת פלאגינים ב-Jenkins ולאמת גישת Admin.
-2) לאמת/ליצור Credentials: `github-token`, `docker-hub`, `kubeconfig`.
-3) להריץ Build ב-Jenkins ולטפל בכשלים במידת הצורך.
-4) לוודא ש-Prometheus מגרד את `/metrics` ו-Dashboard מציג נתונים.
+## איך אפשר לעזור כעת
+- לאשר שה־Docker Hub creds מעודכנים (משתמש/סיסמה פעילים).
+- לוודא שיש מקום בדיסק ל‑build/push.
+- אם ה‑Deploy ייפול: לשלוח לי את 30 השורות האחרונות מה‑Console של Jenkins.
