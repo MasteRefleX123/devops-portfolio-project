@@ -286,7 +286,7 @@ def home():
                     <a href="https://github.com/MasteRefleX123" target="_blank" class="btn">
                         <i class="fab fa-github"></i> GitHub Profile
                     </a>
-                    <a href="mailto:oriyanrwork99@gmail.com" class="btn">
+                    <a href="/contact" class="btn">
                         <i class="fas fa-envelope"></i> צור קשר
                     </a>
                     <a href="#" class="btn" style="background: #0077b5;">
