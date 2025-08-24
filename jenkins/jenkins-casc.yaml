@@ -1,0 +1,39 @@
+jenkins:
+  systemMessage: "DevOps Portfolio Project - Automated Jenkins"
+  credentials:
+    system:
+      domainCredentials:
+        - credentials:
+            - string:
+                scope: GLOBAL
+                id: "github-token"
+                description: "GitHub PAT"
+                secret: "${GITHUB_TOKEN}"
+            - usernamePassword:
+                scope: GLOBAL
+                id: "docker-hub"
+                description: "Docker Hub push creds"
+                username: "${DOCKERHUB_USER}"
+                password: "${DOCKERHUB_PASS}"
+            - file:
+                scope: GLOBAL
+                id: "kubeconfig"
+                description: "Kubeconfig for kubectl"
+                fileName: "config"
+                secretBytes: "${KUBECONFIG_BASE64}"
+  jobs:
+    - script: >
+        pipelineJob('devops-portfolio') {
+          definition {
+            cpsScm {
+              scm {
+                git {
+                  remote { url('https://github.com/MasteRefleX123/devops-portfolio-project.git') }
+                  branches('*/feature/day2-docker-kubernetes')
+                }
+              }
+              scriptPath('Jenkinsfile')
+            }
+          }
+          triggers { githubPush() }
+        }

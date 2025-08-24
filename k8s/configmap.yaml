@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: portfolio-config
+  namespace: oriyan-portfolio
+data:
+  FLASK_ENV: "production"
+  FLASK_DEBUG: "False"
+  APP_NAME: "Oriyan Rask DevOps Portfolio"
+  APP_VERSION: "v3.0.0"
+  OWNER_EMAIL: "oriyanrwork99@gmail.com"
+  ENABLE_CONTACT_FORM: "true"
+  ENABLE_VISITOR_TRACKING: "true"

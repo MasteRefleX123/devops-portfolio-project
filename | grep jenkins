@@ -1,0 +1,10 @@
+[33mb061558[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/day2-docker-kubernetes[m[33m)[m Day 4 Complete: Full automation scripts for Jenkins, Kubernetes, and ngrok
+[33m0223185[m Add ngrok setup script - waiting for valid authtoken
+[33m54f7ec8[m Day 4: Complete Jenkins setup with plugins, credentials, and webhook documentation
+[33m50e8829[m Add complete Jenkinsfile with CI/CD pipeline stages
+[33m064487f[m Day 4: Add Jenkins CI/CD Pipeline - Docker setup, Jenkinsfile with full pipeline stages
+[33mc603a13[m 🎯 Day 3 FULLY Complete: NetworkPolicy, PersistentVolume, Ingress, and all production features ready
+[33m928d0ce[m ✨ Add Kubernetes extras: ConfigMap, Secrets, HPA - Production-ready configuration
+[33md604875[m 🚀 Add MongoDB to Kubernetes - Full database integration complete
+[33m4bdb9fd[m ✨ Add Contact Form Feature with v3.0 - Full implementation with Kubernetes deployment
+[33mee9ae2e[m Update k8s deployment with v2.0 image and NodePort configuration

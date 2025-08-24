@@ -1,0 +1,24 @@
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins-server
+    privileged: true
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins.yaml
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - DOCKERHUB_USER=${DOCKERHUB_USER}
+      - DOCKERHUB_PASS=${DOCKERHUB_PASS}
+      - KUBECONFIG_BASE64=${KUBECONFIG_BASE64}
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./jenkins-casc.yaml:/var/jenkins_home/casc_configs/jenkins.yaml:ro
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:
+    name: jenkins_home
