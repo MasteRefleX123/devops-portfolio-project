@@ -8,6 +8,11 @@ pipeline {
         GITHUB_CREDENTIALS = 'github-token'
         KUBECONFIG_CREDENTIALS = 'kubeconfig'
     }
+
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+    }
     
     stages {
         stage('Checkout') {
@@ -17,6 +22,7 @@ pipeline {
                 script {
                     env.GIT_COMMIT_SHORT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                     env.DOCKER_TAG = "v${env.BUILD_NUMBER}"
+                    env.EFFECTIVE_BRANCH = sh(script: 'git rev-parse --abbrev-ref HEAD || echo feature/day2-docker-kubernetes', returnStdout: true).trim()
                 }
             }
         }
@@ -43,7 +49,9 @@ pipeline {
         }
         
         stage('Push to Registry') {
-            when { anyOf { branch 'main'; branch 'feature/day2-docker-kubernetes' } }
+            when {
+                expression { return env.EFFECTIVE_BRANCH == 'main' || env.EFFECTIVE_BRANCH == 'feature/day2-docker-kubernetes' }
+            }
             steps {
                 echo 'Pushing to Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
@@ -55,7 +63,9 @@ pipeline {
         }
         
         stage('Deploy to Kubernetes') {
-            when { anyOf { branch 'main'; branch 'feature/day2-docker-kubernetes' } }
+            when {
+                expression { return env.EFFECTIVE_BRANCH == 'main' || env.EFFECTIVE_BRANCH == 'feature/day2-docker-kubernetes' }
+            }
             steps {
                 echo 'Deploying to Kubernetes...'
                 withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
