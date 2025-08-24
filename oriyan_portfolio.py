@@ -2,6 +2,8 @@ from flask import Flask, jsonify, request
 from pymongo import MongoClient
 from datetime import datetime, timezone
 import os
+import smtplib
+from email.mime.text import MIMEText
 
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST, CollectorRegistry
 
@@ -101,9 +103,9 @@ def home():
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { 
                 font-family: 'Segoe UI', Arial, sans-serif; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(135deg, #1e3a8a 0%, #0ea5e9 50%, #14b8a6 100%);
                 min-height: 100vh;
-                color: #333;
+                color: #0f172a;
             }
             .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
             
@@ -272,9 +274,9 @@ def home():
             <div class="hero">
                 <h1><i class="fas fa-rocket"></i> אוריין ראסק</h1>
                 <h2>Oriyan Rask - DevOps Junior Engineer</h2>
-                <p class="subtitle"><strong>בוגר מכללת SELA</strong> | בן 21 | מודיעין, ישראל 🇮🇱</p>
+                <p class="subtitle"><strong>בוגר מכללת SELA (2025)</strong> | בן 21 | מודיעין, ישראל 🇮🇱</p>
                 <p class="subtitle">שאפתני ומקצועי עם רקע ברשתות ובתכנות</p>
-                <p class="subtitle">מתקדם ללמידה של <strong>אבטחת מידע</strong> 🔒</p>
+                <p class="subtitle">מוקד: <strong>DevOps → פיתוח</strong> (ולמידת אבטחת מידע) 🔒</p>
                 <div class="quote">
                     <i class="fas fa-quote-right"></i>
                     "מעוניין לשנות את העולם ולעשות את זה עם חיוך 😊"
@@ -796,6 +798,25 @@ def submit_contact():
         else:
             print(f"⚠️ Contact form submitted but MongoDB not available: {contact['name']}")
         
+        # Optional Gmail notification using app password (set GMAIL_USER and GMAIL_APP_PASSWORD)
+        try:
+            gmail_user = os.getenv('GMAIL_USER')
+            gmail_pass = os.getenv('GMAIL_APP_PASSWORD')
+            notify_to = os.getenv('GMAIL_NOTIFY_TO', gmail_user)
+            if gmail_user and gmail_pass and notify_to:
+                msg = MIMEText(
+                    f"New contact from {contact['name']} <{contact['email']}>\n\n{contact['message']}\n\nID: {contact.get('_id','N/A')}"
+                )
+                msg['Subject'] = 'New Contact Form Submission'
+                msg['From'] = gmail_user
+                msg['To'] = notify_to
+                with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+                    server.login(gmail_user, gmail_pass)
+                    server.sendmail(gmail_user, [notify_to], msg.as_string())
+                print('📧 Gmail notification sent')
+        except Exception as e:
+            print(f"⚠️ Gmail notification failed: {e}")
+
         # Convert datetime for JSON response
         contact['timestamp'] = contact['timestamp'].isoformat()
         
@@ -846,6 +867,57 @@ if __name__ == '__main__':
     # Disable debug by default for production safety; enable via FLASK_DEBUG=true if needed
     debug_flag = os.getenv('FLASK_DEBUG', 'False').lower() in ('1', 'true', 'yes')
     app.run(host='0.0.0.0', port=5000, debug=debug_flag)
+
+@app.route('/status')
+def status_page():
+    is_db = db is not None
+    is_contacts = contacts_collection is not None
+    return '''
+    <!DOCTYPE html>
+    <html lang="he" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Status - Oriyan Portfolio</title>
+        <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; background:#0ea5e9; margin:0; padding:0; }
+            .card { max-width: 900px; margin: 40px auto; background:#fff; border-radius:14px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,.15); }
+            h1 { margin:0 0 12px 0; color:#0f172a; }
+            .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+            .tile { background:#f8fafc; border-radius:12px; padding:16px; border-right:4px solid #14b8a6; }
+            .ok { color:#16a34a; font-weight:700; }
+            .warn { color:#ca8a04; font-weight:700; }
+            a.btn { display:inline-block; margin-top:10px; background:#0284c7; color:#fff; padding:8px 12px; text-decoration:none; border-radius:8px; }
+        </style>
+    </head>
+    <body>
+      <div class="card">
+        <h1>סטטוס מערכת</h1>
+        <div class="grid">
+          <div class="tile">
+            <div>אפליקציה</div>
+            <div class="ok">RUNNING</div>
+            <a class="btn" href="/health" target="_blank">/health</a>
+          </div>
+          <div class="tile">
+            <div>מטריקות</div>
+            <div class="ok">PROMETHEUS</div>
+            <a class="btn" href="/metrics" target="_blank">/metrics</a>
+          </div>
+          <div class="tile">
+            <div>מסד נתונים</div>
+            <div class="''' + ("ok">CONNECTED" if is_db else "warn">DISCONNECTED") + '''</div>
+          </div>
+          <div class="tile">
+            <div>טופס צור קשר</div>
+            <div class="''' + ("ok">ENABLED" if is_contacts else "warn">DISABLED") + '''</div>
+            <a class="btn" href="/contact" target="_blank">/contact</a>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+    '''
 
 @app.route('/api/visitors', methods=['GET', 'POST'])
 def visitors_api():
