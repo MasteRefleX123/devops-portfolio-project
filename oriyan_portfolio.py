@@ -800,6 +800,7 @@ def submit_contact():
         contact['timestamp'] = contact['timestamp'].isoformat()
         
         return jsonify({
+            'success': True,
             'status': 'success',
             'message': 'Thank you for your message! I will get back to you soon.',
             'contact_id': contact.get('_id', 'temp-id')
