@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_REGISTRY = 'docker.io'
         DOCKER_IMAGE = 'mastereflex123/portfolio'
-        DOCKER_CREDENTIALS = 'docker-hub-credentials'
+        DOCKER_CREDENTIALS = 'docker-hub'
         GITHUB_CREDENTIALS = 'github-credentials'
         KUBECONFIG_CREDENTIALS = 'kubeconfig'
     }
@@ -65,28 +65,22 @@ pipeline {
             steps {
                 echo "Building Docker image..."
                 sh "docker build -t ${DOCKER_IMAGE}:${env.DOCKER_TAG} ."
-                sh "docker tag ${DOCKER_IMAGE}:${env.DOCKER_TAG} ${DOCKER_IMAGE}:latest"
             }
         }
         
         stage('Push to Registry') {
-            when {
-                expression { return env.EFFECTIVE_BRANCH == 'main' || env.EFFECTIVE_BRANCH == 'feature/day2-docker-kubernetes' }
-            }
+            when { anyOf { branch 'main'; branch 'feature/day2-docker-kubernetes' } }
             steps {
                 echo 'Pushing to Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh "echo $PASS | docker login -u $USER --password-stdin"
                     sh "docker push ${DOCKER_IMAGE}:${env.DOCKER_TAG}"
-                    sh "docker push ${DOCKER_IMAGE}:latest"
                 }
             }
         }
         
         stage('Deploy to Kubernetes') {
-            when {
-                expression { return env.EFFECTIVE_BRANCH == 'main' || env.EFFECTIVE_BRANCH == 'feature/day2-docker-kubernetes' }
-            }
+            when { anyOf { branch 'main'; branch 'feature/day2-docker-kubernetes' } }
             steps {
                 echo 'Deploying to Kubernetes...'
                 withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
