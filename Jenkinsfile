@@ -88,21 +88,21 @@ pipeline {
             steps {
                 echo 'Deploying to Kubernetes...'
                 withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
-                    sh """
+                    sh '''
                         set -e
                         # Prepare kubeconfig that is reachable from inside Jenkins (docker network 'kind')
                         KCFG_TMP=$(mktemp)
                         cp "$KUBECONFIG" "$KCFG_TMP"
                         # Replace localhost API endpoint with control-plane name on docker network
-                        sed -i -E 's#server: https://127\\.0\\.0\\.1:[0-9]+#server: https://devops-portfolio-control-plane:6443#g' "$KCFG_TMP"
+                        sed -i -E 's#server: https://127\.0\.0\.1:[0-9]+#server: https://devops-portfolio-control-plane:6443#g' "$KCFG_TMP"
                         export KUBECONFIG="$KCFG_TMP"
                         kubectl cluster-info
                         kubectl -n oriyan-portfolio get deploy oriyan-portfolio-app || true
                         kubectl set image deployment/oriyan-portfolio-app \
-                          portfolio-app=${DOCKER_IMAGE}:${env.DOCKER_TAG} \
+                          portfolio-app=${DOCKER_IMAGE}:${DOCKER_TAG} \
                           -n oriyan-portfolio --record
                         kubectl rollout status deployment/oriyan-portfolio-app -n oriyan-portfolio --timeout=180s
-                    """
+                    '''
                 }
             }
         }
