@@ -18,7 +18,15 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./jenkins-casc.yaml:/var/jenkins_home/casc_configs/jenkins.yaml:ro
     restart: unless-stopped
+    networks:
+      - default
+      - kind
 
 volumes:
   jenkins_home:
     name: jenkins_home
+
+networks:
+  kind:
+    external: true
+    name: kind
