@@ -50,3 +50,23 @@ pytest tests/ --cov=oriyan_portfolio --cov-report=term-missing
 - לעדכן את ה‑Deployment ב‑staging ל‑image החדש ולהמתין ל‑rollout ירוק.
 - לאמת אתר/סטטוס/מטריקות, Prometheus Targets, ו‑Grafana Dashboard.
 - להחזיר את Argo CD ל‑`main` ולמזג.
+
+## בעיות ופתרונות (תמצית)
+- CrashLoop על `:latest`: התמונה החדשה נבנתה ללא `prometheus_client` → מודול חסר. פתרון: ייצוב מיידי על `v3.2` והורדה ל‑0 של ה‑ReplicaSet הקרוס; לאחר ש‑Jenkins יסיים build+push עם התיקון, נפרוס תג חדשה ונאמת.
+- Grafana login loop: לפתור ע"י ניקוי cookies/site‑data בדפדפן ל‑`localhost:3000/3001` או `rollout restart` ל‑Grafana; אם מאחורי proxy, להגדיר `GF_SERVER_ROOT_URL` ו‑`GF_SERVER_SERVE_FROM_SUB_PATH`.
+- Prometheus Targets: בדוקר ה‑Target נראה DOWN (אין DNS לקלאסטר). לבדוק ב‑Prometheus שבקלאסטר (פורט‑פורוורד 9091) ולהבטיח שה‑ServiceMonitor מכוון לתוויות של `portfolio-service` ושה‑/metrics מחזיר 200 מהפוד היציב.
+- `/status` 404 תחת `v3.2`: צפוי. העמוד קיים רק בתמונה החדשה; יאומת אחרי rollout לתג החדשה.
+- GitOps/Argo CD: ה‑Application מצביע ל‑`gitops-staging`. אחרי שהכול ירוק ב‑staging, נחזיר ל‑`main` ונבצע Sync.
+
+## מה נשאר לנעול לפני מיזוג ל‑main
+- לקבע Deployment על `v3.2` עם 2 רפליקות ולהשאיר את RS של `:latest` כבוי עד לסיום ה‑build.
+- להמתין ל‑Jenkins לסיום build+push; לבצע rollout לתג החדשה; לוודא `/`, `/status`, `/metrics` מחזירים 200.
+- לאשר ב‑Prometheus (9091) שה‑Target של `portfolio-service` במצב UP, וב‑Grafana שהדאשבורד נטען עם נתונים.
+- להחזיר את Argo CD ל‑`main` ולבצע Sync → מיזוג.
+
+## בונוסים (Nice‑to‑have)
+- אבטחה: TLS באמצעות cert‑manager ל‑Ingress; מעבר ל‑HTTPS.
+- GitOps מלא: לעבוד עם תגיות Immutable במקום `latest`, ולהסיר Deploy אימפרטיבי מג'נקינס.
+- התראות: חיבור Alerting (Prometheus/Grafana) ל‑Slack/Email; הפעלת כללי התראות בסיסיים.
+- לוגים: חיבור ELK/EFK מלא ו‑dashboards ליישום.
+- מיילים מהטופס: להפעיל `GMAIL_USER`/`GMAIL_APP_PASSWORD` ו‑`GMAIL_NOTIFY_TO` לסביבת staging.
