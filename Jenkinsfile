@@ -71,10 +71,16 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 echo 'Pushing to Docker Hub...'
-                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh "echo $PASS | docker login -u $USER --password-stdin"
-                    sh "docker push ${DOCKER_IMAGE}:${env.DOCKER_TAG}"
-                }
+                sh '''
+                    set -e
+                    if [ -n "$DOCKERHUB_USER" ] && [ -n "$DOCKERHUB_PASS" ]; then
+                      echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                    else
+                      echo "Missing DOCKERHUB_USER/DOCKERHUB_PASS environment variables" >&2
+                      exit 1
+                    fi
+                    docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                '''
             }
         }
         
