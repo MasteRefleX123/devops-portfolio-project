@@ -93,9 +93,10 @@ pipeline {
                         # Prepare kubeconfig that is reachable from inside Jenkins (docker network 'kind')
                         KCFG_TMP=$(mktemp)
                         cp "$KUBECONFIG" "$KCFG_TMP"
-                        # Replace localhost API endpoint with control-plane name on docker network
-                        sed -i -E 's#server: https://127\.0\.0\.1:[0-9]+#server: https://devops-portfolio-control-plane:6443#g' "$KCFG_TMP"
+                        # Point kubeconfig to control-plane reachable on docker network 'kind'
                         export KUBECONFIG="$KCFG_TMP"
+                        CLUSTER_NAME=$(kubectl config view --kubeconfig "$KCFG_TMP" -o jsonpath='{.clusters[0].name}')
+                        kubectl config set-cluster "$CLUSTER_NAME" --kubeconfig "$KCFG_TMP" --server=https://devops-portfolio-control-plane:6443
                         kubectl cluster-info
                         kubectl -n oriyan-portfolio get deploy oriyan-portfolio-app || true
                         kubectl set image deployment/oriyan-portfolio-app \
