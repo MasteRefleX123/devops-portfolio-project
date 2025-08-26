@@ -75,7 +75,7 @@ pipeline {
                     def loggedIn = false
                     try {
                         withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                            sh 'set -euo pipefail; echo "$PASS" | docker login -u "$USER" --password-stdin'
+                            sh 'set -eu; echo "$PASS" | docker login -u "$USER" --password-stdin'
                             loggedIn = true
                         }
                     } catch (err) {
@@ -83,7 +83,7 @@ pipeline {
                     }
                     withEnv(["DOCKERHUB_USER=${env.DOCKERHUB_USER ?: ''}", "DOCKERHUB_PASS=${env.DOCKERHUB_PASS ?: ''}"]) {
                         sh '''
-                            set -euo pipefail
+                            set -eu
                             if [ "'"'"${loggedIn}"'"'"" != "true" ]; then
                               if [ -n "$DOCKERHUB_USER" ] && [ -n "$DOCKERHUB_PASS" ]; then
                                 echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
