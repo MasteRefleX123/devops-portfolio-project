@@ -72,29 +72,24 @@ pipeline {
             steps {
                 echo 'Pushing to Docker Hub...'
                 script {
-                    def loggedIn = false
+                    def didLogin = false
                     try {
                         withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                             sh 'set -eu; echo "$PASS" | docker login -u "$USER" --password-stdin'
-                            loggedIn = true
+                            didLogin = true
                         }
                     } catch (err) {
-                        echo "Credentials id '${DOCKER_CREDENTIALS}' not found or unusable; falling back to env vars."
+                        echo "Credentials id '${DOCKER_CREDENTIALS}' not available, will try env vars."
                     }
-                    withEnv(["DOCKERHUB_USER=${env.DOCKERHUB_USER ?: ''}", "DOCKERHUB_PASS=${env.DOCKERHUB_PASS ?: ''}"]) {
-                        sh '''
-                            set -eu
-                            if [ "'"'"${loggedIn}"'"'"" != "true" ]; then
-                              if [ -n "$DOCKERHUB_USER" ] && [ -n "$DOCKERHUB_PASS" ]; then
-                                echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                              else
-                                echo "Missing Docker Hub credentials (neither Jenkins credential nor DOCKERHUB_USER/PASS present)" >&2
-                                exit 1
-                              fi
-                            fi
-                            docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-                        '''
+                    if (!didLogin) {
+                        if ((env.DOCKERHUB_USER ?: '').trim() && (env.DOCKERHUB_PASS ?: '').trim()) {
+                            sh 'set -eu; echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin'
+                            didLogin = true
+                        } else {
+                            error("Missing Docker Hub credentials (neither Jenkins credential nor DOCKERHUB_USER/PASS present)")
+                        }
                     }
+                    sh "docker push ${DOCKER_IMAGE}:${env.DOCKER_TAG}"
                 }
             }
         }
