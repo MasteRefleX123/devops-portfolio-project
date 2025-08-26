@@ -72,24 +72,33 @@ pipeline {
             steps {
                 echo 'Pushing to Docker Hub...'
                 script {
-                    def didLogin = false
+                    def usedCreds = false
                     try {
                         withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                            sh 'set -eu; echo "$PASS" | docker login -u "$USER" --password-stdin'
-                            didLogin = true
+                            sh '''
+                                set -eu
+                                : "${DOCKER_CONFIG:=$HOME/.docker}"
+                                mkdir -p "$DOCKER_CONFIG"
+                                echo "$PASS" | docker login -u "$USER" --password-stdin
+                                docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                            '''
+                            usedCreds = true
                         }
                     } catch (err) {
-                        echo "Credentials id '${DOCKER_CREDENTIALS}' not available, will try env vars."
+                        echo "Credentials id '${DOCKER_CREDENTIALS}' unavailable; falling back to env."
                     }
-                    if (!didLogin) {
-                        if ((env.DOCKERHUB_USER ?: '').trim() && (env.DOCKERHUB_PASS ?: '').trim()) {
-                            sh 'set -eu; echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin'
-                            didLogin = true
-                        } else {
-                            error("Missing Docker Hub credentials (neither Jenkins credential nor DOCKERHUB_USER/PASS present)")
-                        }
+                    if (!usedCreds) {
+                        sh '''
+                            set -eu
+                            if [ -z "${DOCKERHUB_USER:-}" ] || [ -z "${DOCKERHUB_PASS:-}" ]; then
+                              echo "Missing Docker Hub env credentials" >&2; exit 1
+                            fi
+                            : "${DOCKER_CONFIG:=$HOME/.docker}"
+                            mkdir -p "$DOCKER_CONFIG"
+                            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                            docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        '''
                     }
-                    sh "docker push ${DOCKER_IMAGE}:${env.DOCKER_TAG}"
                 }
             }
         }
