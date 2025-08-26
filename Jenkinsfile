@@ -71,16 +71,29 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 echo 'Pushing to Docker Hub...'
-                sh '''
-                    set -e
-                    if [ -n "$DOCKERHUB_USER" ] && [ -n "$DOCKERHUB_PASS" ]; then
-                      echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                    else
-                      echo "Missing DOCKERHUB_USER/DOCKERHUB_PASS environment variables" >&2
-                      exit 1
-                    fi
-                    docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-                '''
+                script {
+                    def loggedIn = false
+                    try {
+                        withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                            sh 'echo "$PASS" | docker login -u "$USER" --password-stdin'
+                            loggedIn = true
+                        }
+                    } catch (err) {
+                        echo "Credentials id '${DOCKER_CREDENTIALS}' not found or unusable; falling back to env vars."
+                    }
+                    sh """
+                        set -e
+                        if [ "${loggedIn}" != "true" ]; then
+                          if [ -n "$DOCKERHUB_USER" ] && [ -n "$DOCKERHUB_PASS" ]; then
+                            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                          else
+                            echo "Missing Docker Hub credentials (neither Jenkins credential '${DOCKER_CREDENTIALS}' nor DOCKERHUB_USER/PASS present)" >&2
+                            exit 1
+                          fi
+                        fi
+                        docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    """
+                }
             }
         }
         
