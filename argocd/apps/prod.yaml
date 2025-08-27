@@ -23,7 +23,7 @@ spec:
             memory: "384Mi"
   destination:
     server: https://kubernetes.default.svc
-    namespace: oriyan-portfolio
+    namespace: portfolio-prod
   syncPolicy:
     automated:
       prune: true

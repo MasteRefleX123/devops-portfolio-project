@@ -23,7 +23,7 @@ pipeline {
                 checkout scm
                 script {
                     env.GIT_COMMIT_SHORT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    env.DOCKER_TAG = "v${env.BUILD_NUMBER}"
+                    env.DOCKER_TAG = "v${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT}"
                     env.EFFECTIVE_BRANCH = sh(script: 'git rev-parse --abbrev-ref HEAD || echo feature/day2-docker-kubernetes', returnStdout: true).trim()
                 }
             }
@@ -174,6 +174,29 @@ pipeline {
                         kubectl -n oriyan-portfolio delete pod smoke-curl --ignore-not-found=true
                     '''
                 }
+            }
+        }
+
+        stage('ArgoCD Gates (optional)') {
+            when {
+                expression { return env.ARGOCD_ENABLED == 'true' }
+            }
+            steps {
+                echo 'Validating ArgoCD Application health and sync...'
+                sh '''
+                    set -e
+                    if ! command -v argocd >/dev/null 2>&1; then
+                      echo "argocd CLI not installed; skipping gates"; exit 0
+                    fi
+                    APP_NAME=${ARGOCD_APP_NAME:-portfolio-dev}
+                    # If app isn't reachable, skip without failing the pipeline
+                    if ! argocd app get "$APP_NAME" >/dev/null 2>&1; then
+                      echo "ArgoCD app $APP_NAME not found/reachable; skipping"; exit 0
+                    fi
+                    argocd app wait "$APP_NAME" --sync --health --timeout 180 || {
+                      echo "ArgoCD gate failed for $APP_NAME"; exit 1;
+                    }
+                '''
             }
         }
     }
