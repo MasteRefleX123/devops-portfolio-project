@@ -109,14 +109,18 @@ pipeline {
                 withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
                     sh '''
                         set -e
-                        # Prepare kubeconfig that is reachable from inside Jenkins (docker network 'kind')
+                        # Prepare kubeconfig: prefer env KUBECONFIG_BASE64 if provided, otherwise use Jenkins file credential
                         KCFG_TMP=$(mktemp)
-                        cp "$KUBECONFIG" "$KCFG_TMP"
-                        # Point kubeconfig to control-plane reachable on docker network 'kind'
+                        if [ -n "${KUBECONFIG_BASE64:-}" ]; then
+                          echo "$KUBECONFIG_BASE64" | base64 -d > "$KCFG_TMP"
+                        else
+                          cp "$KUBECONFIG" "$KCFG_TMP"
+                        fi
                         export KUBECONFIG="$KCFG_TMP"
+                        # Point kubeconfig to control-plane reachable on docker network 'kind'
                         CLUSTER_NAME=$(kubectl config view --kubeconfig "$KCFG_TMP" -o jsonpath='{.clusters[0].name}')
                         kubectl config set-cluster "$CLUSTER_NAME" --kubeconfig "$KCFG_TMP" --server=https://devops-portfolio-control-plane:6443 --insecure-skip-tls-verify=true
-                        kubectl cluster-info
+                        # Attempt rollout
                         kubectl -n oriyan-portfolio get deploy oriyan-portfolio-app || true
                         kubectl set image deployment/oriyan-portfolio-app \
                           portfolio-app=${DOCKER_IMAGE}:${DOCKER_TAG} \
