@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: portfolio-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/MasteRefleX123/devops-portfolio-project.git
+    targetRevision: feature/day2-docker-kubernetes
+    path: helm/portfolio
+    helm:
+      values: |
+        image:
+          tag: v35
+        labels:
+          app: portfolio
+          component: backend
+          owner: oriyan-hemo
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: oriyan-portfolio
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
+

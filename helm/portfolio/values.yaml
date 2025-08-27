@@ -1,0 +1,77 @@
+replicaCount: 2
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: mastereflex123/portfolio
+  tag: "v35"
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 5000
+  nodePort: 30001
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+
+labels:
+  app: portfolio
+  component: backend
+  owner: oriyan-hemo
+
+env:
+  flask:
+    FLASK_ENV: "production"
+    FLASK_DEBUG: "False"
+  mongo:
+    usernameSecret:
+      name: portfolio-secrets
+      key: MONGO_USERNAME
+    passwordSecret:
+      name: portfolio-secrets
+      key: MONGO_PASSWORD
+    uri: "mongodb://$(MONGO_USERNAME):$(MONGO_PASSWORD)@mongodb-service:27017/oriyan_portfolio?authSource=admin"
+  secretKey:
+    name: portfolio-secrets
+    key: SECRET_KEY
+
+probes:
+  liveness:
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /health
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+hpa:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: portfolio.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+
