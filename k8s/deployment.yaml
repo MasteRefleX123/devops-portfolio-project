@@ -27,7 +27,8 @@ spec:
     spec:
       containers:
       - name: portfolio-app
-        image: mastereflex123/portfolio:latest
+        image: mastereflex123/portfolio:v35
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
           name: http

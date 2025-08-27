@@ -1,5 +1,38 @@
 # DevOps Portfolio Project – Summary
 
+## עדכון מהיום (CI/CD + Deploy)
+- Build+Tests: ירוקים ב‑Jenkins.
+- Push: תוקן `Jenkinsfile` – התחברות לדוקר דרך Credentials (`docker-hub`) עם נפילה חזרה ל‑ENV אם חסר.
+- Deploy: תוקן `Jenkinsfile` לשימוש ב‑`kubectl config set-cluster` ולקישור לרשת `kind` (עודכן `jenkins/docker-compose.yml`).
+- Root cause של עיכוב rollout: kubeconfig לא הוזרק ל‑Jenkins. נדרש `KUBECONFIG_BASE64` בעת הפעלת compose.
+
+### מה בוצע בקוד
+- `Jenkinsfile`:
+  - הסרה של דחיפת `latest` והקשחה של תנאי ריצה.
+  - התחברות Docker Hub: קודם Credentials, fallback ל‑`DOCKERHUB_USER/PASS`.
+  - Deploy: הכנת kubeconfig זמני והפניה ל‑`https://devops-portfolio-control-plane:6443`, `rollout status` עם timeout.
+- `jenkins/docker-compose.yml`: חיבור לרשת `kind` כדי לאפשר גישה ל‑API Server.
+
+### מה נשאר לסגור
+1) לוודא שב‑Jenkins קיימים ENV: `KUBECONFIG_BASE64`, `DOCKERHUB_USER`, `DOCKERHUB_PASS` (נטען דרך `.env` או סוד). לאחר מכן להריץ Pipeline עד סוף Deploy.
+2) לאחר rollout: לאמת `http://localhost:5001/` + `/:200`, `/status:200`, `/health:200`, `/metrics:200`.
+3) Prometheus: ה‑Target של `portfolio-service` במצב `UP`; לתקן `ServiceMonitor`/תוויות אם צריך.
+4) לקבע תגית image לא‑`latest` ב‑`k8s/deployment.yaml` (לתג שבנינו) ולדחוף ל‑`gitops-staging`.
+5) להחזיר Argo CD ל‑`main` ולבצע Sync → Merge.
+
+### הפעלה מהירה ל‑Jenkins עם kubeconfig
+```
+cd /mnt/c/Users/momir/devops-portfolio-project
+set +H
+cat > .env <<EOF
+GITHUB_TOKEN=
+DOCKERHUB_USER=mastereflex123
+DOCKERHUB_PASS=***
+KUBECONFIG_BASE64=$(kubectl config view --raw | base64 -w0)
+EOF
+docker compose -f jenkins/docker-compose.yml --env-file .env up -d
+```
+
 ## מצב נוכחי
 - אפליקציה: Flask עם `/metrics`, רצה ב-Kubernetes (namespace: `oriyan-portfolio`), Service `portfolio-service` מאזין ל-HTTP.
 - CI/CD (Jenkins): Job `devops-portfolio` על `feature/day2-docker-kubernetes`, טריגר GitHub Webhook פעיל (ngrok OK).
