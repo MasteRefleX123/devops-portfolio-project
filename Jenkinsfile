@@ -143,6 +143,39 @@ pipeline {
                 }
             }
         }
+
+        stage('Post-deploy Smoke Test') {
+            steps {
+                echo 'Running smoke test on /health via in-cluster service...'
+                withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
+                    sh '''
+                        set -e
+                        KCFG_TMP=$(mktemp)
+                        if [ -n "${KUBECONFIG_BASE64:-}" ]; then
+                          echo "$KUBECONFIG_BASE64" | base64 -d > "$KCFG_TMP"
+                        else
+                          cp "$KUBECONFIG" "$KCFG_TMP"
+                        fi
+                        export KUBECONFIG="$KCFG_TMP"
+                        # Align server with kind DNS inside docker network
+                        for c in $(kubectl config view --kubeconfig "$KCFG_TMP" -o jsonpath='{.clusters[*].name}'); do
+                          kubectl config set-cluster "$c" --kubeconfig "$KCFG_TMP" --server=https://devops-portfolio-control-plane:6443 --insecure-skip-tls-verify=true || true
+                        done
+
+                        # Use ephemeral curl pod to query the service internally
+                        kubectl -n oriyan-portfolio delete pod smoke-curl --ignore-not-found=true
+                        kubectl -n oriyan-portfolio run smoke-curl --image=curlimages/curl:8.8.0 --restart=Never --command -- sh -c "curl -sS http://portfolio-service/health | tee /tmp/out"
+                        # Wait for completion
+                        kubectl -n oriyan-portfolio wait --for=condition=PodCompleted pod/smoke-curl --timeout=60s
+                        # Fetch logs and validate
+                        OUT=$(kubectl -n oriyan-portfolio logs pod/smoke-curl || true)
+                        echo "$OUT"
+                        echo "$OUT" | grep -q 'healthy' || { echo 'Smoke test failed: /health not healthy'; exit 1; }
+                        kubectl -n oriyan-portfolio delete pod smoke-curl --ignore-not-found=true
+                    '''
+                }
+            }
+        }
     }
     
     post {
