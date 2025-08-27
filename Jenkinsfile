@@ -7,6 +7,8 @@ pipeline {
         DOCKER_CREDENTIALS = 'docker-hub'
         GITHUB_CREDENTIALS = 'github-credentials'
         KUBECONFIG_CREDENTIALS = 'kubeconfig'
+        DOCKER_BUILDKIT = '1'
+        COMPOSE_DOCKER_CLI_BUILD = '1'
     }
 
     options {
@@ -117,9 +119,20 @@ pipeline {
                           cp "$KUBECONFIG" "$KCFG_TMP"
                         fi
                         export KUBECONFIG="$KCFG_TMP"
-                        # Point kubeconfig to control-plane reachable on docker network 'kind'
-                        CLUSTER_NAME=$(kubectl config view --kubeconfig "$KCFG_TMP" -o jsonpath='{.clusters[0].name}')
-                        kubectl config set-cluster "$CLUSTER_NAME" --kubeconfig "$KCFG_TMP" --server=https://devops-portfolio-control-plane:6443 --insecure-skip-tls-verify=true
+
+                        # Ensure kubectl talks to kind control-plane over Docker network DNS
+                        CURRENT_CTX=$(kubectl config current-context 2>/dev/null || true)
+                        if [ -n "$CURRENT_CTX" ]; then
+                          CTX_CLUSTER=$(kubectl config view --kubeconfig "$KCFG_TMP" -o jsonpath="{.contexts[?(@.name=='$CURRENT_CTX')].context.cluster}")
+                          if [ -n "$CTX_CLUSTER" ]; then
+                            kubectl config set-cluster "$CTX_CLUSTER" --kubeconfig "$KCFG_TMP" --server=https://devops-portfolio-control-plane:6443 --insecure-skip-tls-verify=true
+                          fi
+                        fi
+                        # Fallback: update all clusters in kubeconfig (robust in multi-cluster kubeconfigs)
+                        for c in $(kubectl config view --kubeconfig "$KCFG_TMP" -o jsonpath='{.clusters[*].name}'); do
+                          kubectl config set-cluster "$c" --kubeconfig "$KCFG_TMP" --server=https://devops-portfolio-control-plane:6443 --insecure-skip-tls-verify=true || true
+                        done
+
                         # Attempt rollout
                         kubectl -n oriyan-portfolio get deploy oriyan-portfolio-app || true
                         kubectl set image deployment/oriyan-portfolio-app \
