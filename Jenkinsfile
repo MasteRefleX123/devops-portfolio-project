@@ -9,6 +9,8 @@ pipeline {
         KUBECONFIG_CREDENTIALS = 'kubeconfig'
         DOCKER_BUILDKIT = '1'
         COMPOSE_DOCKER_CLI_BUILD = '1'
+        GITOPS_ENABLED = 'false'
+        ARGOCD_ENABLED = 'false'
     }
 
     options {
@@ -33,17 +35,18 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    apt-get update
-                    DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip curl ca-certificates gnupg docker.io
-
-                    # Install kubectl (latest stable)
-                    KVERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
-                    curl -LO "https://dl.k8s.io/release/${KVERSION}/bin/linux/amd64/kubectl"
-                    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-                    rm -f kubectl
-
-                    python3 --version
-                    pip3 --version || true
+                    # Lightweight setup: only install what is missing
+                    command -v curl >/dev/null 2>&1 || (apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y curl ca-certificates gnupg)
+                    # kubectl only if missing
+                    if ! command -v kubectl >/dev/null 2>&1; then
+                      KVERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+                      curl -LO "https://dl.k8s.io/release/${KVERSION}/bin/linux/amd64/kubectl"
+                      install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+                      rm -f kubectl
+                    fi
+                    # docker cli may already be available in the image or via host; don't apt-install docker.io
+                    python3 --version || true
+                    command -v pip3 >/dev/null 2>&1 || true
                     docker --version || true
                     kubectl version --client --output=yaml || true
                 '''
@@ -105,7 +108,42 @@ pipeline {
             }
         }
         
+        stage('GitOps Deploy (create PR)') {
+            when {
+                expression { return env.GITOPS_ENABLED == 'true' }
+            }
+            steps {
+                echo 'Updating Helm values (image.tag) and pushing a branch for PR...'
+                script {
+                    sh '''
+                        set -e
+                        BRANCH="release/auto-v${BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
+                        git config user.email "ci@jenkins"
+                        git config user.name "Jenkins CI"
+                        git checkout -b "$BRANCH"
+                        # Bump Helm values tag
+                        sed -i -E "s#^(\s*tag:\s*).*$#\1\"${DOCKER_TAG}\"#" helm/portfolio/values.yaml
+                        git add helm/portfolio/values.yaml
+                        git commit -m "gitops: bump image tag to ${DOCKER_TAG}"
+                    '''
+                    withCredentials([usernamePassword(credentialsId: GITHUB_CREDENTIALS, usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+                        sh '''
+                            set -e
+                            ORIGIN_URL=$(git remote get-url origin)
+                            # inject token for push
+                            ORIGIN_URL_AUTH=$(echo "$ORIGIN_URL" | sed -E "s#https://#https://${GH_USER}:${GH_TOKEN}@#")
+                            git push "$ORIGIN_URL_AUTH" HEAD:refs/heads/"$BRANCH"
+                            echo "Created branch $BRANCH with image tag ${DOCKER_TAG}. Please open a PR."
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Deploy to Kubernetes') {
+            when {
+                expression { return env.GITOPS_ENABLED != 'true' }
+            }
             steps {
                 echo 'Deploying to Kubernetes...'
                 withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
@@ -150,6 +188,9 @@ pipeline {
                 withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
                     sh '''
                         set -e
+                        if [ "${GITOPS_ENABLED}" = "true" ]; then
+                          echo "GITOPS_ENABLED=true: skipping direct smoke test (handled post-sync)"; exit 0
+                        fi
                         KCFG_TMP=$(mktemp)
                         if [ -n "${KUBECONFIG_BASE64:-}" ]; then
                           echo "$KUBECONFIG_BASE64" | base64 -d > "$KCFG_TMP"
