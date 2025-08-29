@@ -67,6 +67,14 @@ pipeline {
             steps {
                 echo "Building Docker image..."
                 sh "docker build -t ${DOCKER_IMAGE}:${env.DOCKER_TAG} ."
+                // Guard: never allow building/pushing or deploying ':latest'
+                sh '''
+                    set -eu
+                    if echo "${DOCKER_IMAGE}:${DOCKER_TAG}" | grep -Eq ":latest$"; then
+                      echo "Refusing to use ':latest' tag for build/push" >&2
+                      exit 1
+                    fi
+                '''
             }
         }
         
@@ -111,6 +119,11 @@ pipeline {
                 withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
                     sh '''
                         set -e
+                        # Guard: Ensure Kubernetes manifests do not pin ':latest'
+                        if grep -Eq "image:\\s*[^\\s]+:latest" k8s/deployment.yaml 2>/dev/null; then
+                          echo "Kubernetes manifest is using ':latest' image tag - forbidden" >&2
+                          exit 1
+                        fi
                         # Prepare kubeconfig: prefer env KUBECONFIG_BASE64 if provided, otherwise use Jenkins file credential
                         KCFG_TMP=$(mktemp)
                         if [ -n "${KUBECONFIG_BASE64:-}" ]; then
