@@ -15,8 +15,7 @@ monitoring/
 k8s/
 reference_versions/
 **/*.md
-**/*.txt
-!requirements.txt
+#! Avoid excluding all .txt files to keep requirements.txt available for Docker build
 node_modules/
 ngrok*
 Dockerfile
