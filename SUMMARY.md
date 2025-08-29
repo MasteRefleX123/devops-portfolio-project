@@ -6,6 +6,13 @@
 - Deploy: תוקן `Jenkinsfile` לשימוש ב‑`kubectl config set-cluster` ולקישור לרשת `kind` (עודכן `jenkins/docker-compose.yml`).
 - Root cause של עיכוב rollout: kubeconfig לא הוזרק ל‑Jenkins. נדרש `KUBECONFIG_BASE64` בעת הפעלת compose.
 
+### עדכון מהסשן הנוכחי
+- עודכן ngrok וה‑Webhook הוגדר אוטומטית ל‑URL הנוכחי (לדוגמה: `https://1669a04e3ddc.ngrok-free.app/github-webhook/`).
+- הופעלה דחיפה/טריגר ל‑Jenkins (עם Crumb+Cookie) אחרי ריסטרט; ה‑Job רץ תקין עד שלב ה‑Build.
+- כשל Build #36: Docker build נפל כי `requirements.txt` לא עבר לקונטקסט (בגלל כלל ב‑`.dockerignore`).
+- תיקון: עודכן `.dockerignore` כדי לא לחסום קבצי `.txt` וכדי לכלול `requirements.txt` בקונטקסט.
+- Build #37: עבר את ה‑Build+Push, הגיע ל‑Deploy; ה‑rollout נכשל ב‑timeout (180s) – יש לאבחן את מצב ה‑Deployment/Pods.
+
 ### מה בוצע בקוד
 - `Jenkinsfile`:
   - הסרה של דחיפת `latest` והקשחה של תנאי ריצה.
