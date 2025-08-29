@@ -16,6 +16,7 @@ k8s/
 reference_versions/
 **/*.md
 **/*.txt
+!requirements.txt
 node_modules/
 ngrok*
 Dockerfile
