@@ -214,7 +214,7 @@ pipeline {
                     if ! command -v argocd >/dev/null 2>&1; then
                       echo "argocd CLI not installed; skipping gates"; exit 0
                     fi
-                    APP_NAME=${ARGOCD_APP_NAME:-portfolio-dev}
+                    APP_NAME=${ARGOCD_APP_NAME:-portfolio-app}
                     # If app isn't reachable, skip without failing the pipeline
                     if ! argocd app get "$APP_NAME" >/dev/null 2>&1; then
                       echo "ArgoCD app $APP_NAME not found/reachable; skipping"; exit 0
