@@ -1,5 +1,16 @@
 # DevOps Portfolio Project – Summary
 
+## סיכום קצר של היום
+- הועברנו ל‑GitOps: ה‑Jenkinsfile מעדכן את `gitops-staging` עם תגית התמונה (GITOPS_MODE=true) + רענון ArgoCD.
+- נוספו ArgoCD Gates (אופציונלי, skip‑safe) לאחר פריסה.
+- הוסר `k8s/mongodb.yaml` מסניף `gitops-staging` כדי למנוע Drift; נשאר רק StatefulSet.
+- תיעוד חדש: `docs/Architecture.md`, `docs/Operations.md` (מפה ארכיטקטונית ומדריך תפעולי מהיר).
+- שמירה על הקשחה נגד `:latest` בכל השלבים.
+
+מה נותר קצר לפני PR:
+- להגדיר Branch Protection ל‑`main` (נבצע בסוף, לפי החלטתך).
+- אופציונלי: הפעלת עדכון תגובה אוטומטי ב‑PR (כבר מוכן בפייפליין כ‑optional).
+
 ## עדכון מהיום (CI/CD + Deploy)
 - Build+Tests: ירוקים ב‑Jenkins.
 - Push: תוקן `Jenkinsfile` – התחברות לדוקר דרך Credentials (`docker-hub`) עם נפילה חזרה ל‑ENV אם חסר.
