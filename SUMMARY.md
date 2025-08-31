@@ -40,36 +40,40 @@ EOF
 docker compose -f jenkins/docker-compose.yml --env-file .env up -d
 ```
 
-## מצב נוכחי
-- אפליקציה: Flask עם `/metrics`, רצה ב-Kubernetes (namespace: `oriyan-portfolio`), Service `portfolio-service` מאזין ל-HTTP.
-- CI/CD (Jenkins): Job `devops-portfolio` על `feature/day2-docker-kubernetes`, טריגר GitHub Webhook פעיל (ngrok OK).
-- סודות/קרדנשלז ב-Jenkins (מאושרים):
+## מצב נוכחי (מעודכן)
+- אפליקציה: Flask עם `/metrics`, רצה ב‑Kubernetes (`namespace: oriyan-portfolio`).
+  - Deployment: `oriyan-portfolio-app` על `mastereflex123/portfolio:v37-0000360` — rollout ירוק 2/2.
+  - Service: `portfolio-service` (80→5000). Smoke: `/health=200`, `/api/contact=201`.
+- CI/CD (Jenkins): multibranch `devops-portfolio` עם Webhook פעיל (ngrok). Build→Test→BuildKit→Push→Deploy→Smoke.
+  - הקשחות: כשל על `:latest`; בדיקת מניפסטים נגד `:latest`.
+- GitOps (ArgoCD): Application `portfolio-app` מסונכרן ל‑`gitops-staging` (נתיב `k8s/`).
+  - image בקבצי GitOps מקובע ל‑`v37-0000360` למניעת drift.
+- Monitoring: Prometheus (9090) + Grafana (3000) פעילים; דשבורד "Portfolio App Overview" פרוביז׳נד; חוקים ל‑5xx/p90 latency נטענו.
+- קרדנשלז ב‑Jenkins:
   - `docker-hub-credentials` (Username/Password)
-  - `github-credentials` (Username/Password לטוקן GitHub, בשימוש ל-SCM/טריגר)
-  - `kubeconfig` (Secret file בשם `config`)
-- שיפורים שבוצעו היום:
-  - תוקנו בדיקות Pytest (fixture `client`, תמיכת UTF‑8, מטריקות Prometheus עם Registry ייעודי).
-  - `Jenkinsfile`: שלב Setup Tools (Python, Docker CLI, kubectl), יישור IDs של קרדנשלז, הפעלת venv תואמת sh.
-  - /api/contact מחזיר כעת `success=true` בהתאם לבדיקות.
+  - `github-credentials` (token)
+  - `kubeconfig` (Secret file `config`)
 
 ## סטטוס Pipeline
-- שלבים: Test → Build Docker Image → Push (Docker Hub) → Deploy (kubectl set image + rollout)
-- תנאי ריצה ל-Push/Deploy: סניף `main` או `feature/day2-docker-kubernetes` (אנחנו על feature, כך שמורשה).
+- שלבים: Test → Build (Docker BuildKit) → Push (Docker Hub) → Deploy (kubectl set image + rollout) → Smoke.
+- תנאי ריצה ל‑Push/Deploy: `main` או `feature/day2-docker-kubernetes`.
 
 ## בעיות/סיכונים שנותרו
-- Docker Push: תלוי בהרשאות ותפוסת דיסק. אם push ייכשל → לאמת `docker-hub-credentials` ולבדוק קצב/ratelimit.
-- Deploy: דורש kubeconfig תקין והרשאות לקלאסטר. אם `kubectl` ייכשל → לבדוק את ה־Secret file `kubeconfig` ולוודא שהקלאסטר נגיש.
-- Monitoring: לאחר Deploy לאמת מטריקות ב‑Prometheus וגרפים ב‑Grafana (kube‑prometheus‑stack).
+- Drift (נפתר): ArgoCD החזיר בעבר `:latest`. ננעל בקבצים ל‑`v37-0000360`. להקפיד commits דרך GitOps בלבד.
+- Branch protection: להפעיל בסיום (Required status + review) — מתוכנן.
+- Helm: יש Helm chart, אך ArgoCD עוד מסנכרן מניפסטים — הסבה ל‑Helm אחרי ה‑PR.
 
-## מה נשאר כדי לסגור את היום (Day 5)
-1) להריץ Build ירוק עד הסוף (כולל Push/Deploy).
-2) לאשר rollout תקין ולבדוק `/health` ו‑`/metrics` (200).
-3) לאמת ב‑Prometheus שה‑Service נבחר ע"י ServiceMonitor; וב‑Grafana שהדאשבורד מציג נתונים.
+## מה נשאר (לפני ה‑PR)
+1) לעדכן/לנקות מסמכים: SUMMARY (מסמך זה) + Runbook קצר (rollout).  
+2) ArgoCD gates בפייפליין (skip‑safe כשאין CLI).  
+3) Lighten Setup בשלב Jenkins (שיפור זמני build).  
+4) Refactor docs (docs/Architecture, docs/Operations) — ניווט קל.
 
-## צעדים הבאים (לקראת Argo CD)
-- להכין/לתקף Helm chart (תיקיית `helm/`).
-- התקנת Argo CD (`namespace: argocd`) והגדרת Application (או App‑of‑Apps) שמצביע על הריפו.
-- לחבר את הפייפליין: bump גרסת image ב‑values → commit → Argo מסנכרן אוטומטית לקלאסטר.
+## אחרי ה‑PR (להשלמת הדרישות)
+- להעביר את ArgoCD לצרוך Helm chart (`helm/`) ו‑values (image.tag).  
+- להרחיב Jenkinsfile: feature → helm lint/template; main → helm package/push (OCI/DockerHub).  
+- להעביר Prometheus+Grafana להתקנת Helm (kube‑prometheus‑stack) ולהשבית compose.  
+- להפעיל Branch protection ל‑`main`.
 
 ## פעולות מהירות
 ```
@@ -81,6 +85,12 @@ docker compose -f jenkins/docker-compose.yml --env-file .env up -d
 
 # בדיקות מקומיות
 pytest tests/ --cov=oriyan_portfolio --cov-report=term-missing
+
+# אימות מהיר (לאחר פריסה)
+kubectl -n oriyan-portfolio get deploy oriyan-portfolio-app -o jsonpath='{.status.readyReplicas}/{.status.replicas} {.spec.template.spec.containers[0].image}{"\n"}'
+pkill -f "port-forward.*5001:80" 2>/dev/null || true; nohup kubectl -n oriyan-portfolio port-forward svc/portfolio-service 5001:80 >/dev/null 2>&1 &
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5001/health   # מצופה 200
+curl -s -X POST -H "Content-Type: application/json" -d '{"name":"t","email":"a@b.c","message":"x"}' -o /dev/null -w "%{http_code}\n" http://localhost:5001/api/contact  # מצופה 201
 ```
 
 ## איך אפשר לעזור כעת
