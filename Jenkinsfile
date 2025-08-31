@@ -9,6 +9,8 @@ pipeline {
         KUBECONFIG_CREDENTIALS = 'kubeconfig'
         DOCKER_BUILDKIT = '1'
         COMPOSE_DOCKER_CLI_BUILD = '1'
+        // Toggle GitOps mode to update gitops-staging instead of kubectl deploy
+        GITOPS_MODE = 'true'
     }
 
     options {
@@ -45,6 +47,11 @@ pipeline {
                     if ! command -v docker >/dev/null 2>&1; then
                       apt-get update
                       DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io
+                    fi
+
+                    if ! command -v git >/dev/null 2>&1; then
+                      apt-get update
+                      DEBIAN_FRONTEND=noninteractive apt-get install -y git
                     fi
 
                     # Install kubectl only if missing
@@ -127,6 +134,9 @@ pipeline {
         }
         
         stage('Deploy to Kubernetes') {
+            when {
+                expression { return env.GITOPS_MODE != 'true' }
+            }
             steps {
                 echo 'Deploying to Kubernetes...'
                 withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
@@ -165,6 +175,60 @@ pipeline {
                           portfolio-app=${DOCKER_IMAGE}:${DOCKER_TAG} \
                           -n oriyan-portfolio --record
                         kubectl rollout status deployment/oriyan-portfolio-app -n oriyan-portfolio --timeout=180s
+                    '''
+                }
+            }
+        }
+
+        stage('Update GitOps (ArgoCD)') {
+            when {
+                expression { return env.GITOPS_MODE == 'true' }
+            }
+            steps {
+                echo 'Updating gitops-staging manifests with new image tag...'
+                script {
+                    withCredentials([usernamePassword(credentialsId: GITHUB_CREDENTIALS, usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
+                        sh '''
+                            set -euo pipefail
+                            REPO_URL=$(git config --get remote.origin.url | sed -E 's#https://([^/]+)/#github.com/#')
+                            WORKDIR=$(mktemp -d)
+                            echo "Working dir: $WORKDIR"
+                            git config --global user.name "jenkins-bot"
+                            git config --global user.email "jenkins@example.com"
+                            # Use authenticated URL for push
+                            AUTH_URL=$(echo "$REPO_URL" | sed -E "s#https://#https://${GH_USER}:${GH_TOKEN}@#")
+                            git clone --branch gitops-staging --depth 1 "$AUTH_URL" "$WORKDIR/repo"
+                            cd "$WORKDIR/repo"
+                            # Update image tag in deployment manifest
+                            if [ -f k8s/deployment.yaml ]; then
+                              sed -i -E 's|(^[[:space:]]*image:[[:space:]]*'"${DOCKER_IMAGE}"'):[^[:space:]]+|\\1:'"${DOCKER_TAG}"'|' k8s/deployment.yaml
+                            else
+                              echo "k8s/deployment.yaml not found" >&2; exit 1
+                            fi
+                            git add k8s/deployment.yaml
+                            if git diff --cached --quiet; then
+                              echo "No GitOps changes to commit"; exit 0
+                            fi
+                            git commit -m "gitops: update image to ${DOCKER_IMAGE}:${DOCKER_TAG} (build ${BUILD_NUMBER})"
+                            git push origin gitops-staging
+                        '''
+                    }
+                }
+                // Optionally nudge ArgoCD to refresh
+                withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
+                    sh '''
+                        set -e
+                        KCFG_TMP=$(mktemp)
+                        if [ -n "${KUBECONFIG_BASE64:-}" ]; then
+                          echo "$KUBECONFIG_BASE64" | base64 -d > "$KCFG_TMP"
+                        else
+                          cp "$KUBECONFIG" "$KCFG_TMP"
+                        fi
+                        export KUBECONFIG="$KCFG_TMP"
+                        for c in $(kubectl config view --kubeconfig "$KCFG_TMP" -o jsonpath='{.clusters[*].name}'); do
+                          kubectl config set-cluster "$c" --kubeconfig "$KCFG_TMP" --server=https://devops-portfolio-control-plane:6443 --insecure-skip-tls-verify=true || true
+                        done
+                        kubectl -n argocd annotate application portfolio-app argocd.argoproj.io/refresh=hard --overwrite || true
                     '''
                 }
             }
