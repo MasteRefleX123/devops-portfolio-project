@@ -33,14 +33,27 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    apt-get update
-                    DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip curl ca-certificates gnupg docker.io
+                    # Install only if missing (faster builds)
+                    if ! command -v python3 >/dev/null 2>&1; then
+                      apt-get update
+                      DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-venv python3-pip
+                    fi
+                    if ! command -v curl >/dev/null 2>&1; then
+                      apt-get update
+                      DEBIAN_FRONTEND=noninteractive apt-get install -y curl ca-certificates gnupg
+                    fi
+                    if ! command -v docker >/dev/null 2>&1; then
+                      apt-get update
+                      DEBIAN_FRONTEND=noninteractive apt-get install -y docker.io
+                    fi
 
-                    # Install kubectl (latest stable)
-                    KVERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
-                    curl -LO "https://dl.k8s.io/release/${KVERSION}/bin/linux/amd64/kubectl"
-                    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-                    rm -f kubectl
+                    # Install kubectl only if missing
+                    if ! command -v kubectl >/dev/null 2>&1; then
+                      KVERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+                      curl -LO "https://dl.k8s.io/release/${KVERSION}/bin/linux/amd64/kubectl"
+                      install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+                      rm -f kubectl
+                    fi
 
                     python3 --version
                     pip3 --version || true
