@@ -26,10 +26,14 @@ spec:
             ingressClassName: nginx
             annotations:
               kubernetes.io/ingress.class: nginx
-            tls:
-              - secretName: jenkins-tls
-                hosts:
-                  - jenkins.local
+            tls: []
+          podSecurityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          containerSecurityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
           resources:
             requests:
               cpu: "300m"
@@ -42,6 +46,8 @@ spec:
         persistence:
           enabled: true
           size: 8Gi
+          accessMode: ReadWriteOnce
+          storageClass: standard
         agent:
           enabled: false
   destination:
