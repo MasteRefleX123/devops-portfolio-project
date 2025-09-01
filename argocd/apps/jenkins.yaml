@@ -12,6 +12,8 @@ spec:
     helm:
       values: |
         controller:
+          image:
+            tag: "lts-jdk17"
           adminUser: "admin"
           adminPassword: "devops2024"
           installPlugins:
