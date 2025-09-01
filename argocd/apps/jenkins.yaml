@@ -21,7 +21,7 @@ spec:
           serviceType: ClusterIP
           ingress:
             enabled: true
-            hostName: jenkins.local
+            hostName: jenkins.127.0.0.1.nip.io
             ingressClassName: nginx
             annotations:
               kubernetes.io/ingress.class: nginx
