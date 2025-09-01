@@ -20,6 +20,16 @@ spec:
             - git:5.2.1
             - configuration-as-code:1775.v810dc950b_514
           serviceType: ClusterIP
+          ingress:
+            enabled: true
+            hostName: jenkins.local
+            ingressClassName: nginx
+            annotations:
+              kubernetes.io/ingress.class: nginx
+            tls:
+              - secretName: jenkins-tls
+                hosts:
+                  - jenkins.local
           resources:
             requests:
               cpu: "300m"
