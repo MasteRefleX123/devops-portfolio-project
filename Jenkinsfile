@@ -64,10 +64,16 @@ pipeline {
                       rm -f kubectl
                     fi
 
+                    # Install helm only if missing
+                    if ! command -v helm >/dev/null 2>&1; then
+                      curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+                    fi
+
                     python3 --version
                     pip3 --version || true
                     docker --version || true
                     kubectl version --client --output=yaml || true
+                    helm version || true
                 '''
             }
         }
@@ -132,6 +138,39 @@ pipeline {
                         '''
                     }
                 }
+            }
+        }
+
+        stage('Pre-deploy Validations') {
+            steps {
+                echo 'Validating rendered manifests and image locally before deploy...'
+                sh '''
+                    set -euo pipefail
+                    # Helm lint
+                    helm lint helm/portfolio
+                    # Render manifests for namespace and validate no :latest
+                    helm template portfolio helm/portfolio \
+                      --namespace oriyan-portfolio \
+                      --set image.repository=${DOCKER_IMAGE} \
+                      --set image.tag=${DOCKER_TAG} > rendered.yaml
+                    if grep -nE "image:\\s*[^\\s]+:latest" rendered.yaml; then
+                      echo "Rendered manifests reference :latest - forbidden" >&2
+                      exit 1
+                    fi
+                    # Schema/basic validation using kubectl client dry-run
+                    kubectl apply --dry-run=client -f rendered.yaml >/dev/null
+
+                    # Local container smoke test on /health
+                    CID=$(docker run -d -p 5005:5000 ${DOCKER_IMAGE}:${DOCKER_TAG})
+                    ok=0
+                    for i in $(seq 1 20); do
+                      code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5005/health || true)
+                      if [ "$code" = "200" ]; then ok=1; break; fi; sleep 1
+                    done
+                    docker rm -f "$CID" >/dev/null 2>&1 || true
+                    rm -f rendered.yaml
+                    [ "$ok" = "1" ] || { echo "Local container smoke /health failed" >&2; exit 1; }
+                '''
             }
         }
         
