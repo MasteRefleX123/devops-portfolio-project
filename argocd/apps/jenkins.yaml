@@ -12,15 +12,11 @@ spec:
     helm:
       values: |
         controller:
-          image:
-            tag: "lts-jdk17"
+          image: "jenkins/jenkins"
+          tag: "lts-jdk17"
           adminUser: "admin"
           adminPassword: "devops2024"
-          installPlugins:
-            - kubernetes:4269.v80c6eb_ef4571
-            - workflow-aggregator:596.v8c21c963d92d
-            - git:5.2.1
-            - configuration-as-code:1775.v810dc950b_514
+          installPlugins: []
           serviceType: ClusterIP
           ingress:
             enabled: true
