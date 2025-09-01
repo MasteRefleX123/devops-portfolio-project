@@ -5,7 +5,7 @@ fullnameOverride: ""
 
 image:
   repository: mastereflex123/portfolio
-  tag: "v35"
+  tag: "v37-0000360"
   pullPolicy: IfNotPresent
 
 service:
@@ -38,10 +38,26 @@ env:
     passwordSecret:
       name: portfolio-secrets
       key: MONGO_PASSWORD
-    uri: "mongodb://$(MONGO_USERNAME):$(MONGO_PASSWORD)@mongodb-service:27017/oriyan_portfolio?authSource=admin"
+    usernameB64: ""
+    passwordB64: ""
+    uri: "{{ printf "mongodb://%s:%s@%s:%d/%s?authSource=admin" (env \"MONGO_USERNAME\") (env \"MONGO_PASSWORD\") "mongodb" 27017 "oriyan_portfolio" }}"
   secretKey:
     name: portfolio-secrets
     key: SECRET_KEY
+
+# Subcharts configuration
+mongodb:
+  enabled: true
+  architecture: standalone
+  fullnameOverride: mongodb
+  auth:
+    enabled: true
+    rootPassword: "devroot2024"
+    username: "portfolio"
+    password: "devops2024"
+    database: "oriyan_portfolio"
+  service:
+    port: 27017
 
 probes:
   liveness:

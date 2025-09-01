@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jenkins
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://charts.jenkins.io
+    chart: jenkins
+    targetRevision: 4.8.3
+    helm:
+      values: |
+        controller:
+          adminUser: "admin"
+          adminPassword: "devops2024"
+          installPlugins:
+            - kubernetes:4269.v80c6eb_ef4571
+            - workflow-aggregator:596.v8c21c963d92d
+            - git:5.2.1
+            - configuration-as-code:1775.v810dc950b_514
+          serviceType: ClusterIP
+          resources:
+            requests:
+              cpu: "300m"
+              memory: "512Mi"
+            limits:
+              cpu: "600m"
+              memory: "1Gi"
+          JCasC:
+            defaultConfig: true
+        persistence:
+          enabled: true
+          size: 8Gi
+        agent:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: jenkins
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

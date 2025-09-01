@@ -12,11 +12,13 @@ spec:
     helm:
       values: |
         image:
-          tag: v35
+          tag: v37-0000360
         labels:
           app: portfolio
           component: backend
           owner: oriyan-hemo
+        mongodb:
+          enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: portfolio-dev

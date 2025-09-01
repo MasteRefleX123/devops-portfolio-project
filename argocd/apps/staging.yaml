@@ -12,8 +12,10 @@ spec:
     helm:
       values: |
         image:
-          tag: v35
+          tag: v37-0000360
         replicaCount: 2
+        mongodb:
+          enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: portfolio-staging
