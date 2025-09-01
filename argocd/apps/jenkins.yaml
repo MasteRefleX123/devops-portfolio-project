@@ -16,6 +16,7 @@ spec:
           tag: "lts-jdk17"
           adminUser: "admin"
           adminPassword: "devops2024"
+          overwritePlugins: true
           installPlugins: []
           serviceType: ClusterIP
           ingress:
