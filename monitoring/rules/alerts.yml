@@ -9,3 +9,21 @@ groups:
         annotations:
           summary: "No metrics from portfolio app"
           description: "No portfolio_requests_total series scraped for 5m. Check app/ingress."
+
+      - alert: PortfolioHTTP5xxRateHigh
+        expr: sum(rate(portfolio_requests_total{http_status=~"5.."}[5m])) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 5xx rate on portfolio app"
+          description: "HTTP 5xx responses exceed 0.1 req/s over 5m. Investigate errors."
+
+      - alert: PortfolioLatencyP90High
+        expr: histogram_quantile(0.9, sum(rate(portfolio_request_latency_seconds_bucket[5m])) by (le)) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Portfolio latency p90 high"
+          description: "p90 latency > 0.8s over last 5m. Check application performance."

@@ -11,4 +11,8 @@
 {{- end -}}
 {{- end -}}
 
+{{/* Expand a tpl string safely */}}
+{{- define "oriyan-portfolio.tpl" -}}
+{{- tpl . . | quote -}}
+{{- end -}}
 

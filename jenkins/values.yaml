@@ -1,0 +1,42 @@
+controller:
+  image: jenkins/jenkins
+  tag: lts-jdk17
+  adminUser: admin
+  adminPassword: devops2024
+  overwritePlugins: true
+  installPlugins: []
+  serviceType: ClusterIP
+  ingress:
+    enabled: true
+    hostName: ""
+    ingressClassName: nginx
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    tls: []
+  resources:
+    requests:
+      cpu: 300m
+      memory: 512Mi
+    limits:
+      cpu: 600m
+      memory: 1Gi
+  JCasC:
+    defaultConfig: true
+    configScripts:
+      01-crumb-and-location: |
+        jenkins:
+          location:
+            url: "http://jenkins.local:30080/"
+        unclassified:
+          crumbIssuer:
+            standard:
+              excludeClientIPFromCrumb: true
+persistence:
+  enabled: true
+  size: 8Gi
+  accessMode: ReadWriteOnce
+  storageClass: standard
+agent:
+  enabled: false
+
+

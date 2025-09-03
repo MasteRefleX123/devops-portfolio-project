@@ -10,38 +10,8 @@ spec:
     chart: jenkins
     targetRevision: 4.8.3
     helm:
-      values: |
-        controller:
-          image: "jenkins/jenkins"
-          tag: "lts-jdk17"
-          adminUser: "admin"
-          adminPassword: "devops2024"
-          overwritePlugins: true
-          installPlugins: []
-          serviceType: ClusterIP
-          ingress:
-            enabled: true
-            hostName: ""
-            ingressClassName: nginx
-            annotations:
-              kubernetes.io/ingress.class: nginx
-            tls: []
-          podSecurityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            fsGroup: 1000
-          containerSecurityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          resources:
-            requests:
-              cpu: "300m"
-              memory: "512Mi"
-            limits:
-              cpu: "600m"
-              memory: "1Gi"
-          JCasC:
-            defaultConfig: true
+      valueFiles:
+        - jenkins/values.yaml
         persistence:
           enabled: true
           size: 8Gi

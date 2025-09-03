@@ -91,6 +91,6 @@ ingress:
   tls: []
 
 serviceMonitor:
-  enabled: false
+  enabled: true
 
 

@@ -56,3 +56,7 @@ kubectl -n argocd patch application portfolio-app --type=merge -p='{"spec":{"syn
 See: `docs/Runbook-Rollout.md`
 
 
+
+
+
+

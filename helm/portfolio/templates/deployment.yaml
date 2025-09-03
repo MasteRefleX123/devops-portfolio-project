@@ -42,7 +42,7 @@ spec:
                   name: {{ .Values.env.mongo.passwordSecret.name }}
                   key: {{ .Values.env.mongo.passwordSecret.key }}
             - name: MONGO_URI
-              value: {{ .Values.env.mongo.uri | quote }}
+              value: {{ tpl .Values.env.mongo.uri . | quote }}
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
