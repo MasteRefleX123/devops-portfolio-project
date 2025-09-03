@@ -46,8 +46,8 @@ spec:
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secretKey.name }}
-                  key: {{ .Values.secretKey.key }}
+                  name: {{ .Values.env.secretKey.name }}
+                  key: {{ .Values.env.secretKey.key }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:

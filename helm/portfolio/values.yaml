@@ -40,7 +40,7 @@ env:
       key: MONGO_PASSWORD
     usernameB64: ""
     passwordB64: ""
-    uri: "{{ printf "mongodb://%s:%s@%s:%d/%s?authSource=admin" (env \"MONGO_USERNAME\") (env \"MONGO_PASSWORD\") "mongodb" 27017 "oriyan_portfolio" }}"
+    uri: '{{ printf "mongodb://%s:%s@%s:%d/%s?authSource=admin" .Values.mongodb.auth.username .Values.mongodb.auth.password "mongodb" 27017 .Values.mongodb.auth.database }}'
   secretKey:
     name: portfolio-secrets
     key: SECRET_KEY
