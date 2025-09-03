@@ -19,6 +19,22 @@ spec:
             ingressClassName: nginx
             hosts:
               - grafana.127.0.0.1.nip.io
+          additionalDataSources:
+            - name: Prometheus
+              type: prometheus
+              access: proxy
+              url: http://kps-kube-prometheus-stack-prometheus.monitoring.svc:9090
+              isDefault: true
+          dashboards:
+            default:
+              node-exporter-full:
+                gnetId: 1860
+                revision: 29
+                datasource: Prometheus
+              prometheus-2-0-overview:
+                gnetId: 3662
+                revision: 2
+                datasource: Prometheus
         prometheus:
           ingress:
             enabled: true
