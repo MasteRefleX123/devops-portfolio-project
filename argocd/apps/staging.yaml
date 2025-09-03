@@ -10,12 +10,9 @@ spec:
     targetRevision: feature/day2-docker-kubernetes
     path: helm/portfolio
     helm:
-      values: |
-        image:
-          tag: v37-0000360
-        replicaCount: 2
-        mongodb:
-          enabled: true
+      valueFiles:
+        - helm/portfolio/values.yaml
+        - helm/portfolio/values-staging.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: portfolio-staging

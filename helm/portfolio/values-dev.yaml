@@ -1,0 +1,12 @@
+replicaCount: 1
+
+labels:
+  env: dev
+
+mongodb:
+  enabled: true
+
+serviceMonitor:
+  enabled: true
+
+

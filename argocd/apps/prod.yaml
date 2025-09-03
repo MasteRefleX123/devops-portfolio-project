@@ -10,19 +10,9 @@ spec:
     targetRevision: feature/day2-docker-kubernetes
     path: helm/portfolio
     helm:
-      values: |
-        image:
-          tag: v37-0000360
-        replicaCount: 2
-        resources:
-          requests:
-            cpu: "150m"
-            memory: "192Mi"
-          limits:
-            cpu: "300m"
-            memory: "384Mi"
-        mongodb:
-          enabled: true
+      valueFiles:
+        - helm/portfolio/values.yaml
+        - helm/portfolio/values-prod.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: portfolio-prod

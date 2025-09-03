@@ -1,0 +1,12 @@
+replicaCount: 2
+
+labels:
+  env: staging
+
+mongodb:
+  enabled: true
+
+serviceMonitor:
+  enabled: true
+
+
