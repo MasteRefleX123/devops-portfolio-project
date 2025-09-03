@@ -5,20 +5,16 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://charts.jenkins.io
-    chart: jenkins
-    targetRevision: 4.8.3
-    helm:
-      valueFiles:
-        - jenkins/values.yaml
-        persistence:
-          enabled: true
-          size: 8Gi
-          accessMode: ReadWriteOnce
-          storageClass: standard
-        agent:
-          enabled: false
+  sources:
+    - repoURL: https://charts.jenkins.io
+      chart: jenkins
+      targetRevision: 4.8.3
+      helm:
+        valueFiles:
+          - $values/jenkins/values.yaml
+    - repoURL: https://github.com/MasteRefleX123/devops-portfolio-project.git
+      targetRevision: feature/day2-docker-kubernetes
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: jenkins
