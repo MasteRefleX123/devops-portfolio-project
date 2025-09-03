@@ -6,6 +6,12 @@ controller:
   overwritePlugins: true
   installPlugins: []
   serviceType: ClusterIP
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      scrapeInterval: 30s
+      path: /prometheus
   ingress:
     enabled: true
     hostName: "jenkins.127.0.0.1.nip.io"
