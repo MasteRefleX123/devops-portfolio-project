@@ -19,6 +19,12 @@ spec:
             ingressClassName: nginx
             hosts:
               - grafana.127.0.0.1.nip.io
+          additionalDataSources:
+            - name: Prometheus
+              type: prometheus
+              access: proxy
+              url: http://prometheus-kube-prometheus-prometheus.monitoring.svc:9090
+              isDefault: true
           dashboards:
             default:
               node-exporter-full:
@@ -70,6 +76,46 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - Replace=true
+  ignoreDifferences:
+    - group: ""
+      kind: ConfigMap
+      name: prometheus-grafana
+      namespace: monitoring
+      jsonPointers:
+        - /data
+    - group: ""
+      kind: ConfigMap
+      name: prometheus-grafana-dashboards-default
+      namespace: monitoring
+      jsonPointers:
+        - /data
+    - group: ""
+      kind: Secret
+      name: prometheus-grafana
+      namespace: monitoring
+      jsonPointers:
+        - /data
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      jsonPointers:
+        - /metadata/annotations
+        - /status
+    - group: monitoring.coreos.com
+      kind: Prometheus
+      jsonPointers:
+        - /status
+    - group: networking.k8s.io
+      kind: Ingress
+      jsonPointers:
+        - /status
+    - group: apps
+      kind: Deployment
+      name: prometheus-grafana
+      namespace: monitoring
+      jsonPointers:
+        - /spec/template/metadata/annotations/checksum~1secret
+        - /spec/template/metadata/annotations/checksum~1config
 
 
 

@@ -12,10 +12,10 @@ spec:
       helm:
         valueFiles:
           - $values/jenkins/values.yaml
-    - repoURL: https://github.com/MasteRefleX123/devops-portfolio-project.git
+    - repoURL: https://gitlab.com/MasteRefleX123/devops-portfolio-project.git
       targetRevision: feature/day2-docker-kubernetes
       ref: values
-    - repoURL: https://github.com/MasteRefleX123/devops-portfolio-project.git
+    - repoURL: https://gitlab.com/MasteRefleX123/devops-portfolio-project.git
       targetRevision: feature/day2-docker-kubernetes
       path: jenkins/manifests
   destination:

@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/MasteRefleX123/devops-portfolio-project.git
+    repoURL: https://gitlab.com/MasteRefleX123/devops-portfolio-project.git
     targetRevision: feature/day2-docker-kubernetes
     path: helm/portfolio
     helm:
