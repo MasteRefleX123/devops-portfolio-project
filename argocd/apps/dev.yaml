@@ -11,8 +11,8 @@ spec:
     path: helm/portfolio
     helm:
       valueFiles:
-        - helm/portfolio/values.yaml
-        - helm/portfolio/values-dev.yaml
+        - values.yaml
+        - values-dev.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: portfolio-dev
