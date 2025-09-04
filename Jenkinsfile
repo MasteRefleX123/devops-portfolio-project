@@ -280,47 +280,7 @@ pipeline {
             }
         }
 
-        stage('PR Tracking (optional)') {
-            when {
-                expression { return env.TRACK_PR == 'true' }
-            }
-            steps {
-                echo 'Tracking PR and posting build info (skip-safe)...'
-                script {
-                    withCredentials([usernamePassword(credentialsId: GITHUB_CREDENTIALS, usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
-                        sh '''
-                            set -euo pipefail
-                            ORIGIN_URL=$(git config --get remote.origin.url)
-                            # Extract owner and repo
-                            OWNER=$(echo "$ORIGIN_URL" | sed -E 's#.*github.com[:/ ]([^/]+)/.*#\1#')
-                            REPO=$(echo "$ORIGIN_URL" | sed -E 's#.*/([^/.]+)(\.git)?$#\1#')
-                            BRANCH=${EFFECTIVE_BRANCH:-}
-                            if [ -z "$OWNER" ] || [ -z "$REPO" ] || [ -z "$BRANCH" ]; then
-                              echo "Missing repo or branch; skipping PR tracking"; exit 0
-                            fi
-                            API=https://api.github.com
-                            # Find open PR matching head owner:branch
-                            PR_NUM=$(curl -s -u "$GH_USER:$GH_TOKEN" "$API/repos/$OWNER/$REPO/pulls?state=open&head=$OWNER:$BRANCH" \
-                              | grep -m1 '"number"' | sed -E 's/[^0-9]//g' | head -n1 || true)
-                            if [ -z "$PR_NUM" ]; then
-                              echo "No open PR for $OWNER:$BRANCH; skipping comment"; exit 0
-                            fi
-                            BODY=$(cat <<EOF
-Image: ${DOCKER_IMAGE}:${DOCKER_TAG}
-Commit: ${GIT_COMMIT_SHORT}
-Status: Build pushed and GitOps updated.
-EOF
-)
-                            # Post comment to PR (issues API)
-                            curl -s -u "$GH_USER:$GH_TOKEN" -X POST "$API/repos/$OWNER/$REPO/issues/$PR_NUM/comments" \
-                              -H 'Content-Type: application/json' \
-                              -d "{\"body\": $(printf %s "$BODY" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))') }" >/dev/null || true
-                            echo "Posted comment to PR #$PR_NUM"
-                        '''
-                    }
-                }
-            }
-        }
+        // PR Tracking stage temporarily removed to stabilize pipeline parsing
 
         stage('Post-deploy Smoke Test') {
             steps {
