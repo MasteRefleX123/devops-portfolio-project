@@ -9,4 +9,16 @@ mongodb:
 serviceMonitor:
   enabled: true
 
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: portfolio-dev.127.0.0.1.nip.io
+      paths:
+        - path: /
+          pathType: Prefix
+
 

@@ -1,3 +1,26 @@
+replicaCount: 1
+
+labels:
+  env: staging
+
+mongodb:
+  enabled: true
+
+serviceMonitor:
+  enabled: true
+
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: portfolio-staging.127.0.0.1.nip.io
+      paths:
+        - path: /
+          pathType: Prefix
+
 replicaCount: 2
 
 labels:

@@ -1,3 +1,26 @@
+replicaCount: 2
+
+labels:
+  env: prod
+
+mongodb:
+  enabled: true
+
+serviceMonitor:
+  enabled: true
+
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: portfolio.127.0.0.1.nip.io
+      paths:
+        - path: /
+          pathType: Prefix
+
 replicaCount: 3
 
 labels:
