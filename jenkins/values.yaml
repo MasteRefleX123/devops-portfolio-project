@@ -6,6 +6,9 @@ controller:
   overwritePlugins: true
   installPlugins:
     - prometheus:2.0.11
+    - git:5.2.1
+    - git-client:4.6.0
+    - workflow-aggregator:596.v8c21c963d92d
   serviceType: ClusterIP
   ingress:
     enabled: true
