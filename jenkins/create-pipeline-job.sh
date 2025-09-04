@@ -27,7 +27,7 @@ cat > /tmp/job-config.xml << 'JOBXML'
       <configVersion>2</configVersion>
       <userRemoteConfigs>
         <hudson.plugins.git.UserRemoteConfig>
-          <url>https://github.com/MasteRefleX123/devops-portfolio-project.git</url>
+          <url>https://gitlab.com/MasteRefleX123/devops-portfolio-project.git</url>
         </hudson.plugins.git.UserRemoteConfig>
       </userRemoteConfigs>
       <branches>

@@ -17,7 +17,7 @@ if (job == null) {
     job = jenkins.createProject(WorkflowJob.class, jobName)
     
     // Configure Git repository
-    def gitRepo = "https://github.com/MasteRefleX123/devops-portfolio-project.git"
+    def gitRepo = "https://gitlab.com/MasteRefleX123/devops-portfolio-project.git"
     def gitBranch = "*/feature/day2-docker-kubernetes"
     def scriptPath = "Jenkinsfile"
     
@@ -27,9 +27,9 @@ if (job == null) {
     def scmFlowDefinition = new CpsScmFlowDefinition(scm, scriptPath)
     job.setDefinition(scmFlowDefinition)
     
-    // Add GitHub webhook trigger
-    def githubTrigger = new SCMTrigger("")
-    job.addTrigger(githubTrigger)
+    // Enable Poll SCM (cron spec from Jenkinsfile will also apply)
+    def pollTrigger = new SCMTrigger("H/1 * * * *")
+    job.addTrigger(pollTrigger)
     
     job.save()
     println("✅ Pipeline job created successfully: ${jobName}")

@@ -20,6 +20,11 @@ pipeline {
         timestamps()
     }
     
+    triggers {
+        // Poll SCM every minute (lightweight; Jenkins manages jitter with 'H/')
+        pollSCM('H/1 * * * *')
+    }
+    
     stages {
         stage('Checkout') {
             steps {
