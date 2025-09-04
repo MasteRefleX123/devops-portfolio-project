@@ -13,7 +13,7 @@ spec:
       releaseName: prometheus
       values: |
         grafana:
-          adminPassword: devops2024
+          adminPassword: PROM-OPERATOR
           ingress:
             enabled: true
             ingressClassName: nginx
