@@ -35,6 +35,10 @@ spec:
                 gnetId: 3662
                 revision: 2
                 datasource: Prometheus
+              jenkins-overview:
+                gnetId: 21628
+                revision: 1
+                datasource: Prometheus
         prometheus:
           ingress:
             enabled: true
@@ -44,21 +48,6 @@ spec:
           prometheusSpec:
             serviceMonitorSelector: {}
             serviceMonitorNamespaceSelector: {}
-        # Add scraping for Jenkins controller via ServiceMonitor
-        additionalServiceMonitors:
-          - name: jenkins
-            labels:
-              release: prometheus
-            namespaceSelector:
-              matchNames:
-                - jenkins
-            selector:
-              matchLabels:
-                app.kubernetes.io/name: jenkins
-            endpoints:
-              - port: http
-                path: /prometheus
-                interval: 30s
         kubeStateMetrics:
           enabled: true
         nodeExporter:
