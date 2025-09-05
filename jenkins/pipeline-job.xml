@@ -6,9 +6,9 @@
   <properties>
     <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
       <triggers>
-        <com.cloudbees.jenkins.GitHubPushTrigger plugin="github">
-          <spec></spec>
-        </com.cloudbees.jenkins.GitHubPushTrigger>
+        <hudson.triggers.SCMTrigger>
+          <spec>H/1 * * * *</spec>
+        </hudson.triggers.SCMTrigger>
       </triggers>
     </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
   </properties>
@@ -17,8 +17,8 @@
       <configVersion>2</configVersion>
       <userRemoteConfigs>
         <hudson.plugins.git.UserRemoteConfig>
-          <url>https://github.com/MasteRefleX123/devops-portfolio-project.git</url>
-          <credentialsId>github-token</credentialsId>
+          <url>https://gitlab.com/MasteRefleX123/devops-portfolio-project.git</url>
+          <credentialsId>gitlab-token</credentialsId>
         </hudson.plugins.git.UserRemoteConfig>
       </userRemoteConfigs>
       <branches>
@@ -28,6 +28,6 @@
       </branches>
     </scm>
     <scriptPath>Jenkinsfile</scriptPath>
-    <lightweight>true</lightweight>
+    <lightweight>false</lightweight>
   </definition>
 </flow-definition>

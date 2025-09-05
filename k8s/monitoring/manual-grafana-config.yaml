@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-grafana
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/name: grafana
+data:
+  grafana.ini: |
+    [server]
+    root_url = %(protocol)s://%(domain)s/
+    serve_from_sub_path = false
+    [security]
+    admin_user = admin
+    [paths]
+    data = /var/lib/grafana
+    logs = /var/log/grafana
+    plugins = /var/lib/grafana/plugins
+    provisioning = /etc/grafana/provisioning
+  download_dashboards.sh: |
+    #!/bin/sh
+    echo "no-op download dashboards"
+    exit 0
+
+
+
+
