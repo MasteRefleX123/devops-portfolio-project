@@ -22,7 +22,7 @@ controller:
               excludeClientIPFromCrumb: true
       02-prometheus-config: |
         unclassified:
-          prometheusConfiguration:
+          prometheus:
             path: "/prometheus"
             useAuthenticatedEndpoint: false
             perBuildMetrics: true
