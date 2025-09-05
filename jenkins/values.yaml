@@ -3,12 +3,12 @@ controller:
   tag: lts-jdk17
   adminUser: admin
   adminPassword: devops2024
-  overwritePlugins: true
+  overwritePlugins: false
   installPlugins:
-    - prometheus:2.0.11
     - git:5.2.1
     - git-client:4.6.0
     - workflow-aggregator:596.v8c21c963d92d
+    - prometheus:2.0.11
   JCasC:
     defaultConfig: true
     configScripts:
@@ -29,7 +29,7 @@ controller:
   serviceType: ClusterIP
   ingress:
     enabled: true
-    hostName: "jenkins.127.0.0.1.nip.io"
+    hostName: "jenkins.local"
     ingressClassName: nginx
     annotations:
       kubernetes.io/ingress.class: nginx
@@ -59,12 +59,6 @@ prometheus:
     limits:
       cpu: 600m
       memory: 1Gi
-      02-prometheus-config: |
-        unclassified:
-          prometheusConfiguration:
-            path: "prometheus"
-            useAuthenticatedEndpoint: false
-            perBuildMetrics: true
 persistence:
   enabled: true
   size: 8Gi
