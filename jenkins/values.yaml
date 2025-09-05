@@ -9,6 +9,23 @@ controller:
     - git:5.2.1
     - git-client:4.6.0
     - workflow-aggregator:596.v8c21c963d92d
+  JCasC:
+    defaultConfig: true
+    configScripts:
+      01-crumb-and-location: |
+        jenkins:
+          location:
+            url: "http://jenkins.local:30080/"
+        unclassified:
+          crumbIssuer:
+            standard:
+              excludeClientIPFromCrumb: true
+      02-prometheus-config: |
+        unclassified:
+          prometheusConfiguration:
+            path: "prometheus"
+            useAuthenticatedEndpoint: false
+            perBuildMetrics: true
   serviceType: ClusterIP
   ingress:
     enabled: true
@@ -42,17 +59,6 @@ prometheus:
     limits:
       cpu: 600m
       memory: 1Gi
-  JCasC:
-    defaultConfig: true
-    configScripts:
-      01-crumb-and-location: |
-        jenkins:
-          location:
-            url: "http://jenkins.local:30080/"
-        unclassified:
-          crumbIssuer:
-            standard:
-              excludeClientIPFromCrumb: true
       02-prometheus-config: |
         unclassified:
           prometheusConfiguration:
