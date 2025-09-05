@@ -53,6 +53,12 @@ prometheus:
           crumbIssuer:
             standard:
               excludeClientIPFromCrumb: true
+      02-prometheus-config: |
+        unclassified:
+          prometheusConfiguration:
+            path: "prometheus"
+            useAuthenticatedEndpoint: false
+            perBuildMetrics: true
 persistence:
   enabled: true
   size: 8Gi
