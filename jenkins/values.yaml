@@ -23,7 +23,7 @@ controller:
       02-prometheus-config: |
         unclassified:
           prometheusConfiguration:
-            path: "prometheus"
+            path: "/prometheus"
             useAuthenticatedEndpoint: false
             perBuildMetrics: true
   serviceType: ClusterIP
