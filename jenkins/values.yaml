@@ -51,7 +51,7 @@ prometheus:
   # create ServiceMonitor in monitoring ns
   serviceMonitorNamespace: monitoring
   # endpoint path exposed by plugin
-  scrapeEndpoint: /prometheus
+  scrapeEndpoint: /prometheus/
   resources:
     requests:
       cpu: 300m
