@@ -11,6 +11,7 @@ spec:
     targetRevision: 62.6.0
     helm:
       releaseName: prometheus
+      skipCrds: true
       values: |
         grafana:
           adminPassword: PROM-OPERATOR
@@ -80,7 +81,13 @@ spec:
         - /data
     - group: ""
       kind: ConfigMap
-      name: prometheus-grafana-dashboards-default
+      name: prometheus-grafana-config-dashboards
+      namespace: monitoring
+      jsonPointers:
+        - /data
+    - group: ""
+      kind: ConfigMap
+      name: prometheus-kube-prometheus-grafana-datasource
       namespace: monitoring
       jsonPointers:
         - /data
@@ -95,6 +102,7 @@ spec:
       jsonPointers:
         - /metadata/annotations
         - /status
+        - /spec
     - group: monitoring.coreos.com
       kind: Prometheus
       jsonPointers:
