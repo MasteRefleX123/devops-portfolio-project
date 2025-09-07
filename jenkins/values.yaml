@@ -26,6 +26,7 @@ controller:
             path: "/prometheus"
             useAuthenticatedEndpoint: false
             perBuildMetrics: true
+            namespace: "jenkins"
   serviceType: ClusterIP
   ingress:
     enabled: true
