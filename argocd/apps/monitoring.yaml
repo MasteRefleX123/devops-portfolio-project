@@ -56,8 +56,13 @@ spec:
                   app.kubernetes.io/name: jenkins
               endpoints:
                 - port: http
-                  path: /prometheus
+                  path: /prometheus/
                   interval: 30s
+        prometheusOperator:
+          admissionWebhooks:
+            enabled: false
+            patch:
+              enabled: false
         kubeStateMetrics:
           enabled: true
         nodeExporter:
