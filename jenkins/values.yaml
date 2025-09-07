@@ -3,7 +3,7 @@ controller:
   tag: lts-jdk17
   adminUser: admin
   adminPassword: devops2024
-  overwritePlugins: false
+  overwritePlugins: true
   installPlugins:
     - git:5.2.1
     - git-client:4.6.0
